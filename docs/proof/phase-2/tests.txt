@@ -1,24 +1,29 @@
-✔ game.contract.json có đủ trường bắt buộc của contract v1.0
+✔ game.contract.json có đủ trường bắt buộc của contract v1.1
 ✔ tuning trong contract khớp đúng số game đang dùng (chặn lệch số)
 ✔ lõi mô phỏng không dùng nguồn không tất định
-✔ định dạng: snapshot tick 0 đầu tiên, snapshot mỗi N tick, dòng end cuối, đúng N bước
+✔ định dạng v1.1: snapshot tick 0, night_start, trường mới, snapshot mỗi N tick, end
 ✔ tất định: cùng seed + input ra file giống hệt; khác seed thì khác
 ✔ mã thoát: file sai định dạng -> 2, lỗi tham số -> khác 0
-✔ di chuyển: player_speed, xoay theo cam_yaw_deg, chuẩn hóa vector, chặn mép đảo
-✔ nhảy: Y tăng rồi về 0, cạnh lên mới kích hoạt
-✔ nhặt: tự động trong pickup_radius (biên tính là trong), đầy thì không nhặt
-✔ đom đóm: nhặt một sinh một (cách Mây >= 8 m) khi random_motes bật
-✔ nạp và thắp: trong interact_radius, nạp một phần, đủ lantern_cost thì thắp + per_lantern
-✔ tỏa sáng: tốn pulse_cost, choáng đúng pulse_stun_s, đẩy pulse_push_m, cộng per_stun
-✔ tỏa sáng: thiếu ánh sáng thì không có gì; hồi chiêu đúng pulse_cooldown_s; trúng 0 con vẫn có sự kiện
-✔ tỏa sáng trúng con đang Choáng: đẩy lại, vẫn trong stunned_ids, không cộng per_stun lần nữa
-✔ bị chạm: mất 1 Flame, rơi floor(carried*hit_drop_ratio), bất tử invuln_s, hết Flame thì thua
-✔ Vùng an toàn: chỉ quanh đèn đã Thắp, Bóng Mực không bao giờ ở trong safe_radius
-✔ Vùng an toàn: đèn vừa Thắp đẩy Bóng Mực đang ở trong ra mép ngay bước đó
-✔ kết thúc: Bình minh thua (dawn), dừng đúng tick, time_left_s lấy từ scenario
-✔ kết thúc: thắp đèn cuối thì thắng, cộng per_second_left*floor(time_left) + per_flame_left*flames
-✔ dựng scenario không phát sự kiện, không cộng điểm
-✔ Bóng Mực sinh theo nhịp 45 s, cách Mây >= 15 m, có sự kiện shade_spawned
-ℹ tests 21
-ℹ pass 21
+✔ di chuyển: 6 m/s, xoay theo cam_yaw_deg, chuẩn hóa vector
+✔ nhảy 7 m/s, trọng lực 20: lên khoảng 1.2 m rồi đáp, grounded đổi đúng
+✔ Lướt: 14 m/s trong 12 tick theo hướng đi (đứng yên thì hướng mặt +Z), hồi chiêu 1.5 s từ lúc bắt đầu
+✔ Lướt trên không giữ nguyên độ cao
+✔ Rơi khỏi đảo (Y < -10): -1 Flame, mất hết đom đóm, chờ 60 tick, hồi sinh ở xuất phát + bất tử
+✔ nhặt: XZ ≤ 1.0 (biên tính là trong), đầy thì không nhặt, nhặt không cộng điểm
+✔ đom đóm: 20 lúc đầu trên điểm chuẩn, mỗi 240 tick thêm 1 vào điểm trống, hết điểm thì bỏ lượt
+✔ nạp: trong 2.0 m, +10 mỗi đom đóm nạp, đủ 10 thì thắp +100
+✔ Tỏa sáng: tốn 3, bán kính 3D 5 m từ chân + 0.8, choáng 120 tick, đẩy 4 m trong 15 tick, +5
+✔ Tỏa sáng: thiếu 3 đom đóm thì không kích hoạt; hồi chiêu 3 s; trúng con đang choáng vẫn +5
+✔ bị chạm: -1 Flame, rơi floor(carried/2) đom đóm ra vành 1.5–2.5 m (TTL 480 tick), bất tử 90, bóng recoil
+✔ Vùng an toàn 6 m chỉ quanh đèn đã Thắp
+✔ Vùng an toàn: đèn vừa Thắp đẩy Bóng Mực đang ở trong ra mép
+✔ kết thúc: Bình minh thua (dawn), time_left_s lấy từ scenario
+✔ kết thúc: thắp đèn cuối thì thắng, +floor(giây còn)*2 + 50*Flame
+✔ dựng scenario không phát sự kiện (ngoài night_start), không cộng điểm
+✔ Bóng Mực: 2 con ở tick 300, rồi mỗi 480 tick; spawning -> wander; cách Mây >= 15 m; đuổi khi <= 12 m
+✔ Tạm dừng: tick vẫn tăng, sim_tick và thời gian đứng yên, state paused, sự kiện paused/resumed
+✔ Bùa Gió: nhặt như đom đóm, 600 tick, chạy 7.2 m/s, lướt không hồi chiêu, xuất hiện lại sau 2700 tick
+✔ Đêm 2: 6 đèn, bùa C1 ở (35,0,0), bục nhảy bắn sang đảo kia
+ℹ tests 26
+ℹ pass 26
 ℹ fail 0

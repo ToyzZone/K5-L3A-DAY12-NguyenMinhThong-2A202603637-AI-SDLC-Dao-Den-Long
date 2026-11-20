@@ -1,14 +1,19 @@
 Tất định: mỗi kịch bản chạy 2 lần, cmp giống hệt từng byte.
-contract-example: {"type":"end","ticks":444,"state":"lost","score":10}
-default-night:    {"type":"end","ticks":815,"state":"lost","score":0}
+contract-example: {"type":"end","ticks":413,"state":"lost","score":0}
+default-night:    {"type":"end","ticks":18000,"state":"lost","score":0}
 sự kiện contract-example:
-{"type":"event","tick":35,"name":"mote_picked","data":{"carried":1}}
-{"type":"event","tick":264,"name":"player_hit","data":{"by":"shade","flames":2,"dropped":0}}
-{"type":"event","tick":354,"name":"player_hit","data":{"by":"shade","flames":1,"dropped":0}}
-{"type":"event","tick":444,"name":"player_hit","data":{"by":"shade","flames":0,"dropped":0}}
-{"type":"event","tick":444,"name":"game_over","data":{"result":"lost","reason":"no_flames"}}
+{"type":"event","tick":0,"name":"night_start","data":{"night":1}}
+{"type":"event","tick":40,"name":"mote_picked","data":{"carried":1}}
+{"type":"event","tick":233,"name":"player_hit","data":{"by":"shade","flames":2,"dropped":0}}
+{"type":"event","tick":323,"name":"player_hit","data":{"by":"shade","flames":1,"dropped":0}}
+{"type":"event","tick":413,"name":"player_hit","data":{"by":"shade","flames":0,"dropped":0}}
+{"type":"event","tick":413,"name":"game_over","data":{"result":"lost","reason":"no_flames"}}
 sự kiện default-night:
-{"type":"event","tick":635,"name":"player_hit","data":{"by":"shade","flames":2,"dropped":0}}
-{"type":"event","tick":725,"name":"player_hit","data":{"by":"shade","flames":1,"dropped":0}}
-{"type":"event","tick":815,"name":"player_hit","data":{"by":"shade","flames":0,"dropped":0}}
-{"type":"event","tick":815,"name":"game_over","data":{"result":"lost","reason":"no_flames"}}
+{"type":"event","tick":0,"name":"night_start","data":{"night":1}}
+{"type":"event","tick":300,"name":"shade_spawned","data":{"id":"S1"}}
+{"type":"event","tick":300,"name":"shade_spawned","data":{"id":"S2"}}
+{"type":"event","tick":780,"name":"shade_spawned","data":{"id":"S3"}}
+{"type":"event","tick":1260,"name":"shade_spawned","data":{"id":"S4"}}
+{"type":"event","tick":1740,"name":"shade_spawned","data":{"id":"S5"}}
+{"type":"event","tick":2220,"name":"shade_spawned","data":{"id":"S6"}}
+{"type":"event","tick":18000,"name":"game_over","data":{"result":"lost","reason":"dawn"}}

@@ -18,7 +18,7 @@ Headless theo Test Contract v1.0 (`game.contract.json`):
 node dist/headless.js --seed 1 --night 1 --ticks 600 --out out.jsonl [--scenario s.json] [--inputs i.json] [--snapshot-every 10]
 ```
 
-Test: `npm test` (21 scenario headless + kiểm tra contract). Bằng chứng: `scripts/proof.sh <phase>` → `docs/proof/phase-N/`.
+Test: `npm test` (scenario headless cho từng tính năng + kiểm tra contract). Bằng chứng: `scripts/proof.sh <phase>` → `docs/proof/phase-N/`.
 
 ## Điều khiển
 
@@ -31,27 +31,27 @@ Test: `npm test` (21 scenario headless + kiểm tra contract). Bằng chứng: `
 | F | Tỏa sáng |
 | R | Chơi lại sau khi thắng hoặc thua |
 
-## Luật và cách tính điểm
+## Luật và cách tính điểm (số chuẩn Ticket-02, contract v1.1)
 
-- Đom đóm được nhặt tự động khi tới gần (≤ 1.5 m), mang tối đa 10. Túi đầy thì HUD nhắc mang tới đèn.
-- Nạp: mỗi đèn cần 5 Đom đóm, nạp được nhiều lần. Đèn đã Thắp tạo **Vùng an toàn** bán kính 5 m mà Bóng Mực không vào được (đèn chưa Thắp thì không).
-- Tỏa sáng tốn 2 Đom đóm, hồi chiêu 1 s: Bóng Mực trong 6 m bị Choáng 2.5 s và bị đẩy lùi 4 m.
-- Bóng Mực chạm (≤ 1 m): mất 1 Flame, rơi mất `floor(carried × 0.5)` Đom đóm, Bất tử 1.5 s. Có 3 Flame.
-- Đêm dài 300 s. Cùng một bước vừa thắng vừa thua thì tính thắng.
+- Chạy 6 m/s, nhảy 7 m/s (trọng lực 20), Lướt 14 m/s trong 0.2 s, hồi 1.5 s (phím Shift trong giao diện: *chưa có*, xem notes Phase 2).
+- Đom đóm nhặt tự động khi ≤ 1.0 m (chênh cao ≤ 1.5 m), mang tối đa 10. 20 con đầu Đêm trên điểm chuẩn, cứ 240 tick thêm 1 vào điểm trống (trần 30).
+- Nạp: mỗi đèn cần 10, nạp nhiều lần, bán kính 2 m. Đèn đã Thắp tạo **Vùng an toàn** 6 m.
+- Tỏa sáng tốn 3, bán kính 5 m (3D, tâm ở chân + 0.8 m), hồi 3 s: Bóng Mực Choáng 120 tick, bị đẩy 4 m trong 15 tick.
+- Bóng Mực: sinh 2 con ở giây 5 rồi mỗi 8 s (tối đa 6), đuổi khi ≤ 12 m, bỏ khi > 18 m. Chạm: −1 Flame, rơi `floor(carried / 2)` Đom đóm ra vành 1.5–2.5 m (tồn tại 8 s), Bất tử 1.5 s.
+- Rơi khỏi đảo (Y < −10): −1 Flame, mất hết Đom đóm, hồi sinh ở xuất phát sau 1 s.
+- Hết Flame luôn thua; còn sống và Thắp hết đèn thì thắng; hết giờ thì thua (Bình minh).
 
 | Sự kiện | Điểm |
 |---|---|
-| Nhặt một Đom đóm | +10 |
+| Mỗi Đom đóm Nạp vào đèn | +10 |
 | Thắp một đèn | +100 |
-| Làm Choáng một Bóng Mực (chưa Choáng) | +25 |
-| Khi thắng: mỗi giây còn lại (`floor(time_left_s)`) | +2 |
+| Mỗi Bóng Mực trúng Tỏa sáng (mỗi lần) | +5 |
+| Khi thắng: mỗi giây còn lại (`floor`) | +2 |
 | Khi thắng: mỗi Flame còn lại | +50 |
 
-## Tuning và giả định ngoài contract
+## Tuning và giả định
 
-Mọi số trong `tuning` là số game đang dùng (test `contract.test.mjs` đỏ nếu lệch). `fall_enabled: false`: đảo có bán kính 40 m, Mây bị chặn ở mép nên không có rơi khỏi đảo và không có sự kiện `player_hit` với `by: "fall"`. Không có `dash` (contract ghi "nếu có").
-
-Số không có trong contract: đảo bán kính 40 m; 5 đèn trên vòng tròn 25 m, L1 tại (0, 0, 25), cách nhau 72°; luôn 20 Đom đóm (nhặt một sinh một, cách Mây ≥ 8 m); Bóng Mực: 2 con đầu Ván ở bán kính 38 m, thêm 1 con mỗi 45 s, tối đa 6; Bóng Mực lơ lửng ở Y = 1; nhảy 6 m/s, trọng lực 20 m/s². Toàn bộ giả định và lý do: [docs/notes/phase-1.md](docs/notes/phase-1.md).
+`tuning` trong `game.contract.json` là đúng số chuẩn của Ticket-02 (test `contract.test.mjs` đỏ nếu lệch). `shade_speed` = 4.0 là số Đêm 1/2; Đêm 3 dùng 4.5 m/s theo ticket nhưng Đêm 3 **chưa làm**. Giả định cho chỗ ticket chưa nói: [docs/notes/phase-2.md](docs/notes/phase-2.md). Giả định Phase 1: [docs/notes/phase-1.md](docs/notes/phase-1.md).
 
 ## Sáng tạo của tôi
 
