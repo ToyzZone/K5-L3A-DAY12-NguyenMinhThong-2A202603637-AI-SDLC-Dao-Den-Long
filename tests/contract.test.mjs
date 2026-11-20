@@ -5,8 +5,8 @@ import { TUNING } from '../dist/sim/tuning.js';
 
 const contract = JSON.parse(readFileSync('game.contract.json', 'utf8'));
 
-test('game.contract.json có đủ trường bắt buộc của contract v1.1', () => {
-  assert.equal(contract.contract_version, '1.1');
+test('game.contract.json có đủ trường bắt buộc của contract v1.2', () => {
+  assert.equal(contract.contract_version, '1.2');
   for (const k of ['team', 'build_cmd', 'run_cmd', 'headless_cmd']) assert.equal(typeof contract[k], 'string', k);
   assert.equal(contract.headless_cmd, 'node dist/headless.js');
 });

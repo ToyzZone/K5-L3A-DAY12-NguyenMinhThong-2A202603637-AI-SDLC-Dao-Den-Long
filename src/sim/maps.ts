@@ -29,7 +29,7 @@ const within = (x: number, z: number, cx: number, cz: number, r: number) => Math
 
 const night1: NightMap = {
   night: 1,
-  duration_s: 300,
+  duration_s: 240,
   start: [0, 0, 0],
   lanterns: [[0, 0, 25], [23.8, 0, 7.7], [14.7, 0, -20.2], [-14.7, 0, -20.2], [-23.8, 0, 7.7]],
   motePoints: [...ring(8, 12, 0, 45), ...ring(16, 33, 0, 22.5)],
@@ -45,7 +45,7 @@ const night1: NightMap = {
 
 const night2: NightMap = {
   night: 2,
-  duration_s: 330,
+  duration_s: 270,
   start: [0, 0, 0],
   lanterns: [[0, 0, 20], [17, 0, -10], [-17, 0, -10], [70, 0, 20], [87, 0, -10], [53, 0, -10]],
   motePoints: [0, 70].flatMap((cx) => [...ring(4, 10, 0, 90, cx), ...ring(8, 22, 0, 45, cx)]),

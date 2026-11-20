@@ -13,7 +13,7 @@ export interface Frame {
   pause?: boolean;
 }
 type Obj = Record<string, unknown>;
-const SHADE_STATES: ShadeState[] = ['spawning', 'wander', 'chase', 'recoil', 'stunned'];
+const SHADE_STATES: ShadeState[] = ['spawning', 'wander', 'chase', 'recoil', 'stunned', 'drain'];
 
 function bad(msg: string): never {
   throw new FormatError(msg);
@@ -86,6 +86,7 @@ export function parseScenario(raw: unknown, night = 1): Scenario {
       dash_cd_ticks: opt(p, 'dash_cd_ticks', int, 'player'),
       pulse_cd_ticks: opt(p, 'pulse_cd_ticks', int, 'player'),
       charm_ticks: opt(p, 'charm_ticks', int, 'player'),
+      successful_lights: opt(p, 'successful_lights', int, 'player'),
     };
   }
   for (const k of ['random_motes', 'random_shades', 'random_drifters', 'wind_enabled'] as const) {
@@ -102,7 +103,7 @@ export function parseScenario(raw: unknown, night = 1): Scenario {
       if (id !== undefined) ids.add(id);
       const state = opt(o, 'state', str, w);
       if (state !== undefined && !SHADE_STATES.includes(state as ShadeState)) bad(`${w}.state phải là một trong ${SHADE_STATES.join(', ')}`);
-      return { id, pos: vec3(o.pos, `${w}.pos`), state: state as ShadeState | undefined, state_ticks_left: opt(o, 'state_ticks_left', int, w) };
+      return { id, pos: vec3(o.pos, `${w}.pos`), state: state as ShadeState | undefined, state_ticks_left: opt(o, 'state_ticks_left', int, w), target_lantern_id: opt(o, 'target_lantern_id', str, w) };
     });
   }
   if (s.drifters !== undefined) {
@@ -125,7 +126,7 @@ export function parseScenario(raw: unknown, night = 1): Scenario {
       const w = `lanterns[${i}]`;
       const o = obj(x, w);
       if (typeof o.id !== 'string' || !valid.includes(o.id)) bad(`${w}.id phải là một trong ${valid.join(', ')}`);
-      return { id: o.id, pos: opt(o, 'pos', vec3, w), lit: opt(o, 'lit', bool, w), deposited: opt(o, 'deposited', int, w) };
+      return { id: o.id, pos: opt(o, 'pos', vec3, w), lit: opt(o, 'lit', bool, w), deposited: opt(o, 'deposited', int, w), fuel: opt(o, 'fuel', num, w), ever_lit: opt(o, 'ever_lit', bool, w) };
     });
   }
   if (s.time_left_s !== undefined) {

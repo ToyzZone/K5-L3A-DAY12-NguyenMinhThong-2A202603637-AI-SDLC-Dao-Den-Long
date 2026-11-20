@@ -8,9 +8,9 @@ export const TUNING = {
   interact_radius: 2,
   pulse_cost: 3,
   pulse_radius: 5,
-  night1_duration_s: 300,
-  night2_duration_s: 330,
-  night3_duration_s: 360,
+  night1_duration_s: 240,
+  night2_duration_s: 270,
+  night3_duration_s: 300,
   flames: 3,
   invuln_s: 1.5,
   hit_drop_ratio: 0.5,
@@ -24,7 +24,16 @@ export const TUNING = {
   dash_speed: 14,
   dash_duration_s: 0.2,
   dash_cooldown_s: 1.5,
-  score: { per_mote: 10, per_lantern: 100, per_stun: 5, per_second_left: 2, per_flame_left: 50 },
+  fuel_max: 100,
+  fuel_decay_per_s: 1.0,
+  fuel_per_mote: 10,
+  relight_cost: 5,
+  win_ratio: 0.6,
+  drain_per_s: 5,
+  low_fuel_threshold: 30,
+  capacity_max: 20,
+  // Ticket-03 thay công thức điểm: +5 mỗi đom đóm nạp, +100 thắp lần đầu; bỏ thưởng thời gian (0).
+  score: { per_mote: 5, per_lantern: 100, per_stun: 5, per_second_left: 0, per_flame_left: 50 },
 };
 
 // Số chuẩn khác của Ticket-02 không có khóa trong tuning (tính bằng tick).
@@ -66,6 +75,13 @@ export const RULES = {
   drifter_steal: 3,
   drifter_flee_ticks: 240,
   drifter_vanish_ticks: 120,
+  relight_score: 40,
+  drain_stun_score: 15,
+  dawn_lantern_bonus: 50,
+  drain_range: 2,
+  drain_exit_chase: 6,
+  fuel_drain_every: 60,
+  capacity_step: 2,
 };
 
 export const TPS = 60;
