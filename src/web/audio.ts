@@ -56,4 +56,6 @@ export const sfx = {
   lose: () => arp([440, 392, 330, 262], 0.18, 'sine', 0.22),
   shade: () => tone(110, 65, 0.7, 'sawtooth', 0.07),
   tick: () => tone(1200, 1200, 0.05, 'square', 0.07),
+  steal: () => tone(1300, 380, 0.3, 'triangle', 0.16),
+  wind: () => tone(180, 520, 1.4, 'sawtooth', 0.04),
 };

@@ -7,13 +7,14 @@ import { sfx, setVolume, unlockAudio } from './audio.js';
 const $ = (id: string) => document.getElementById(id)!;
 const newSeed = () => Math.floor(Math.random() * 2 ** 31);
 const C = { sky: 0x0e1430, fog: 0x1b2350, grass: 0x2f5d50, sand: 0xc9b48a, wood: 0x6b4a2f, sea: 0x12384a, lit: 0xffb347, core: 0xffe9b0, unlit: 0x5b5f6e, moteCore: 0xfff6c2, moteHalo: 0xffe58a, shade: 0x120a1a, shadeRim: 0x7a3cff, stunned: 0x3a3450, shirt: 0xe8e2d0, red: 0xc8102e, gold: 0xf2c14e };
-const ISLAND: Record<number, string> = { 1: 'Đảo Bến', 2: 'Đảo Cau' };
+const ISLAND: Record<number, string> = { 1: 'Đảo Bến', 2: 'Đảo Cau', 3: 'Đảo Chuông' };
 const DANG: Record<number, string> = {
   1: 'Thắp đèn rồi nhớ châm dầu, giữ đảo sáng tới bình minh con nhé.',
   2: 'Đảo Cau có hai bờ: đi cầu gỗ hoặc nhảy bàn đá, chớ rơi xuống biển mây.',
+  3: 'Gió Đảo Chuông thổi từng cơn: nghe gió rít thì đứng vững, đừng để Gió Lạc cướp đom đóm.',
 };
-// ponytail: hình đảo vẽ tay theo maps.ts (ground() không liệt kê đảo); thêm Đêm 3 thì thêm ở đây.
-const ISLANDS: Record<number, [number, number][]> = { 1: [[0, 40]], 2: [[0, 28], [70, 28]] };
+// ponytail: hình đảo vẽ tay theo maps.ts (ground() không liệt kê đảo); đổi bản đồ thì sửa cả ở đây.
+const ISLANDS: Record<number, [number, number][]> = { 1: [[0, 40]], 2: [[0, 28], [70, 28]], 3: [[0, 45]] };
 
 // --- Cài đặt (lưu localStorage) ---
 const settings = { vol: 0.6, sens: 0.3, cb: false }; // cb: Bảng màu dễ phân biệt (Ticket-03 §6)
@@ -46,7 +47,7 @@ const std = (color: number, emissive = 0, ei = 1, extra: THREE.MeshStandardMater
   new THREE.MeshStandardMaterial({ color, emissive, emissiveIntensity: ei, roughness: 0.85, ...extra });
 const flat = (color: number, opacity: number, extra: THREE.MeshBasicMaterialParameters = {}) =>
   new THREE.MeshBasicMaterial({ color, transparent: true, opacity, side: THREE.DoubleSide, depthWrite: false, ...extra });
-function add<M extends THREE.Material>(g: THREE.BufferGeometry, m: M, parent: THREE.Object3D = scene, x = 0, y = 0, z = 0) {
+function add<M extends THREE.Material | THREE.Material[]>(g: THREE.BufferGeometry, m: M, parent: THREE.Object3D = scene, x = 0, y = 0, z = 0) {
   const o = new THREE.Mesh(g, m);
   o.position.set(x, y, z);
   parent.add(o);
@@ -115,6 +116,22 @@ function makeLantern(parent: THREE.Object3D) {
   return { g, head, core, light, pips, safe, tears, barBg, bar, litAt: -9 };
 }
 const levels = new Map<number, Level>();
+// Đêm 3 Đảo Chuông: khối đặc vách đứng theo night3Ground (maps.ts).
+function buildNight3(g: THREE.Group) {
+  const cliff = std(0x8a7f6a), top = std(C.grass), stone = std(0x6d6878);
+  const half = new THREE.Shape(); // tầng 1: nửa vành khăn r 12–24, z > 0, Y 3
+  half.absarc(0, 0, 24, 0, Math.PI, false);
+  half.absarc(0, 0, 12, Math.PI, 0, true);
+  // rotateX(+90°): hình (x, y) -> (x, ·, y) nên z > 0; khối đùn xuống [-3, 0] rồi đặt ở Y 3.
+  add(new THREE.ExtrudeGeometry(half, { depth: 3, bevelEnabled: false, curveSegments: 48 }).rotateX(Math.PI / 2), [top, cliff], g, 0, 3, 0);
+  add(new THREE.CylinderGeometry(8, 8, 6, 48), [cliff, top, top], g, 0, 3, 0); // tầng 2: r ≤ 8, Y 6
+  add(new THREE.CylinderGeometry(2, 2, 8, 24), stone, g, 0, 10, 0); // tháp chuông: đỉnh Y 14
+  add(new THREE.TorusGeometry(2.05, 0.12, 8, 32).rotateX(Math.PI / 2), std(C.gold, C.gold, 1.5), g, 0, 12.6, 0);
+  add(new THREE.ConeGeometry(2.8, 2.2, 24), std(C.red), g, 0, 15.1, 0);
+  const wedge = new THREE.Shape([new THREE.Vector2(24, 0), new THREE.Vector2(30, 0), new THREE.Vector2(24, 3)]);
+  const rampGeo = new THREE.ExtrudeGeometry(wedge, { depth: 3, bevelEnabled: false }).translate(0, 0, -1.5);
+  for (const deg of [30, 150]) add(rampGeo, [std(C.wood), std(C.wood)], g).rotation.y = (-deg * Math.PI) / 180; // +X -> (cos, sin)
+}
 function level(w: World): Level {
   for (const [n, l] of levels) l.g.visible = n === w.night;
   const cached = levels.get(w.night);
@@ -130,7 +147,8 @@ function level(w: World): Level {
     add(new THREE.BoxGeometry(18, 0.3, 4), std(C.wood), g, 35, -0.15, 0);
     for (const x of [26.5, 31, 35.5, 40, 43.5]) for (const z of [-1.9, 1.9]) add(new THREE.CylinderGeometry(0.08, 0.08, 1), std(C.wood), g, x, 0.5, z);
   }
-  const pads = w.map.pads.map((p) => add(new THREE.CylinderGeometry(1, 1.1, 0.16, 24), std(0x8a8170, C.gold, 1), g, p.pos[0], 0.08, p.pos[2]));
+  if (w.night === 3) buildNight3(g);
+  const pads = w.map.pads.map((p) => add(new THREE.CylinderGeometry(1, 1.1, 0.16, 24), std(0x8a8170, C.gold, 1), g, p.pos[0], p.pos[1] + 0.08, p.pos[2]));
   const charms = w.charms.map((c) => {
     const o = new THREE.Group();
     add(new THREE.BoxGeometry(0.62, 0.82, 0.04), std(C.gold, C.gold, 0.6), o);
@@ -188,6 +206,26 @@ function applyPalette() {
 }
 applyPalette();
 
+// Gió Lạc: dải lụa xám xanh (một hình học chung, uốn sóng mỗi khung).
+const ribbonGeo = new THREE.PlaneGeometry(0.45, 2.4, 1, 12);
+const ribbonBase = Float32Array.from(ribbonGeo.getAttribute('position').array);
+const ribbonMat = std(0x8fa3b8, 0x8fa3b8, 0.35, { side: THREE.DoubleSide, transparent: true, opacity: 0.85 });
+const drifters = new Map<string, THREE.Group>();
+const makeDrifter = () => {
+  const g = new THREE.Group();
+  add(ribbonGeo, ribbonMat, g).rotation.z = 1.25;
+  add(ribbonGeo, ribbonMat, g, 0.3, -0.2, 0.2).rotation.z = 1.0;
+  add(moteGeo, moteMat, g, 0, 0.2, 0).name = 'loot'; // đang mang đom đóm cướp được
+  return g;
+};
+// Gió: vệt gió quanh Mây theo hướng gió khi có cơn; báo trước 2 s.
+const WIND_N = 140, windBase = Float32Array.from({ length: WIND_N * 3 }, (_, i) => (i % 3 === 1 ? 0.3 + Math.random() * 5 : (Math.random() - 0.5) * 40));
+const windGeo = new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(WIND_N * 6), 3));
+const windMat = new THREE.LineBasicMaterial({ color: 0xe4ecff, transparent: true, opacity: 0.55 });
+const windLines = new THREE.LineSegments(windGeo, windMat);
+windLines.frustumCulled = false;
+scene.add(windLines);
+
 // --- Hiệu ứng ---
 const pulseRing = add(ring(0.85, 1), flat(0xffc870, 1));
 let pulseAt = -9, hitAt = -9;
@@ -218,7 +256,7 @@ function panelHtml(): string {
       ? `<h1>Thắng Đêm ${night}</h1><p>Giữ đảo sáng tới bình minh</p><p>${litNow}</p><p>Điểm Đêm: ${world.score} · Tổng: ${total}</p>` + btn('next', hasNight(night + 1) ? 'Đêm tiếp theo' : 'Đón Bình Minh') + btn('menu', 'Về menu')
       : `<h1>Thua</h1><p>${endReason === 'no_flames' ? 'Hết Ngọn Lửa' : 'Bình minh tới nhưng chưa đủ đèn sáng'}</p><p>${litNow}</p><p>Điểm Đêm: ${world.score} · Tổng: ${total}</p>` + btn('retry', `Chơi lại Đêm ${night}`) + btn('menu', 'Về menu');
     case 'dawn': return `<h1>Bình Minh</h1><p>Mặt trời lên, các đảo đã sáng đèn.</p><p>Tổng điểm: <b>${total}</b></p>` +
-      `<p class="quote">Đêm 3 đang được dựng, sắp ra mắt.</p>` + btn('menu', 'Về menu');
+      btn('menu', 'Về menu');
   }
 }
 const panel = $('panel');
@@ -334,7 +372,8 @@ function drawHud(w: World) {
 }
 
 // --- Vẽ thế giới ---
-function draw(now: number) {
+let camY = 0;
+function draw(now: number, dt: number) {
   const w = world, p = w.player, t = w.simTick, [px, py, pz] = p.pos;
   const f = w.lanterns.filter((l) => l.lit).length / w.lanterns.length;
   ambient.intensity = 0.15 + 0.55 * f;
@@ -347,8 +386,9 @@ function draw(now: number) {
   scarf.material.emissiveIntensity = t < p.charmUntil ? 1.5 + Math.sin(now * 10) : 0;
 
   const th = (yaw * Math.PI) / 180;
-  camera.position.set(px - Math.sin(th) * 9, 6 + py * 0.3, pz - Math.cos(th) * 9);
-  camera.lookAt(px, 1 + py * 0.3, pz);
+  camY += (py - camY) * Math.min(1, dt * 4); // bám độ cao tầng/bục êm, nhảy chỉ nhích nhẹ
+  camera.position.set(px - Math.sin(th) * 9, camY + 6, pz - Math.cos(th) * 9);
+  camera.lookAt(px, camY + 1, pz);
   camera.updateMatrixWorld();
 
   w.lanterns.forEach((l, i) => {
@@ -400,6 +440,35 @@ function draw(now: number) {
   lines.needsUpdate = true;
   drainGeo.setDrawRange(0, nLines * 2);
 
+  // Gió Lạc
+  const pos = ribbonGeo.getAttribute('position') as THREE.BufferAttribute;
+  for (let i = 0; i < pos.count; i++) pos.setZ(i, ribbonBase[i * 3 + 2] + 0.25 * Math.sin(ribbonBase[i * 3 + 1] * 3 + now * 7));
+  pos.needsUpdate = true;
+  sync(drifters, w.drifters.filter((d) => d.state !== 'removed'), makeDrifter, (o, d) => {
+    o.rotation.y = Math.atan2(d.dir[0], d.dir[1]) + 0.3 * Math.sin(now * 2 + Number(d.id.slice(1)));
+    o.position.y += 0.2 * Math.sin(now * 3);
+    o.getObjectByName('loot')!.visible = d.stolen > 0;
+  });
+
+  // Gió: vệt theo hướng gió khi có cơn; 2 s trước cơn thì vệt lưa thưa xoáy nhẹ (chưa biết hướng).
+  const gust = w.windEnabled && t < w.windUntil, warn = w.windEnabled && !gust && t % R.wind_every >= R.wind_every - 120;
+  windLines.visible = gust || warn;
+  if (windLines.visible) {
+    const a = (w.windDir * Math.PI) / 180, dx = gust ? Math.cos(a) : Math.cos(now), dz = gust ? Math.sin(a) : Math.sin(now);
+    const v = gust ? 16 : 3, len = gust ? 1.6 : 0.5, wp = windGeo.getAttribute('position') as THREE.BufferAttribute;
+    for (let i = 0; i < WIND_N; i++) {
+      const b = i * 3;
+      windBase[b] = ((windBase[b] + dx * v * dt + 60) % 40) - 20; // quấn trong ô 40 m quanh Mây
+      windBase[b + 2] = ((windBase[b + 2] + dz * v * dt + 60) % 40) - 20;
+      const x = px + windBase[b], y = camY + windBase[b + 1], z = pz + windBase[b + 2];
+      wp.setXYZ(i * 2, x, y, z);
+      wp.setXYZ(i * 2 + 1, x - dx * len, y, z - dz * len);
+    }
+    wp.needsUpdate = true;
+    windMat.opacity = gust ? 0.55 : 0.25;
+  }
+  $('wind').textContent = gust ? 'Gió mạnh!' : warn ? 'Gió sắp nổi…' : '';
+
   const pa = (now - pulseAt) / 0.6;
   pulseRing.visible = pa < 1;
   if (pulseRing.visible) {
@@ -427,6 +496,7 @@ function frame(ms: number) {
       const evs = step(world, readInput());
       tapPause = false;
       if (wasGrounded && !world.player.grounded && world.player.vel[1] > 0) sfx.jump();
+      if (world.windUntil === world.simTick + R.wind_ticks) sfx.wind(); // cơn gió vừa nổi tick này
       for (const e of evs) {
         if (e.name === 'pulse') { pulseAt = now; sfx.pulse(); pulseRing.position.set(world.player.pos[0], world.player.pos[1] + 0.08, world.player.pos[2]); }
         else if (e.name === 'player_hit') { hitAt = now; sfx.hit(); }
@@ -435,6 +505,7 @@ function frame(ms: number) {
         else if (e.name === 'dash') sfx.dash();
         else if (e.name === 'charm_picked') sfx.charm();
         else if (e.name === 'shade_spawned') sfx.shade();
+        else if (e.name === 'drifter_steal') sfx.steal();
         else if (e.name === 'game_over') {
           screen = 'result';
           endReason = String(e.data.reason); // dawn_survived | dawn | no_flames
@@ -444,7 +515,7 @@ function frame(ms: number) {
     }
     if (acc >= 1 / TPS) acc = 0; // ponytail: bỏ phần dồn khi máy chậm thay vì đuổi theo
   }
-  draw(now);
+  draw(now, dt);
   hud.style.display = screen === 'play' ? 'block' : 'none';
   if (screen === 'play') drawHud(world);
   renderPanel();
