@@ -8,10 +8,12 @@ Game 3D bằng TypeScript. Lõi mô phỏng thuần ở `src/sim/` (tất địn
 - Chơi: `npm run play`
 - Bằng chứng: `scripts/proof.sh <phase>` (xem skill `proof`)
 
-## Phạm vi hiện tại (contract v1.1, Ticket-02)
+## Phạm vi hiện tại (contract v1.2, Ticket-02 + Ticket-03)
 - Số chuẩn nằm ở `src/sim/tuning.ts` (`TUNING` = khóa contract, `RULES` = số chuẩn khác), bản đồ chuẩn ở `src/sim/maps.ts`. Không tự chọn số nữa.
 - Thứ tự trong `step()` phải đúng 12 bước của Ticket-02. Bộ đếm lưu dạng "until" theo `sim_tick`, không theo `tick` (tạm dừng chỉ tăng `tick`).
 - Mỗi tính năng mới cần ít nhất 1 scenario headless trong `tests/headless.test.mjs`.
+- Dầu đèn lưu số nguyên đơn vị 1/60 (`Lantern.fuel`); Vùng an toàn dùng `hasSafeZone()`, không dùng `l.lit`.
+- Luật bị ticket mới [THAY THẾ]: cập nhật `CHANGELOG.md`, ghi test bị sửa hoặc xóa vào `docs/notes/phase-N.md`, viết ADR nếu đổi mô hình.
 
 ## Quy tắc
 - Test Contract trong `docs/lab/` là luật cứng. Luật chơi đã chốt nằm ở `docs/notes/phase-N.md`, thuật ngữ ở `GLOSSARY.md`. Không tự bịa luật; chỗ mơ hồ thì hỏi người dùng rồi ghi vào notes.

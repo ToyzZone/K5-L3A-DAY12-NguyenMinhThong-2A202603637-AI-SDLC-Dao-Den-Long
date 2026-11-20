@@ -1,0 +1,40 @@
+✔ game.contract.json có đủ trường bắt buộc của contract v1.2
+✔ tuning trong contract khớp đúng số game đang dùng (chặn lệch số)
+✔ lõi mô phỏng không dùng nguồn không tất định
+✔ định dạng v1.1: snapshot tick 0, night_start, trường mới, snapshot mỗi N tick, end
+✔ tất định: cùng seed + input ra file giống hệt; khác seed thì khác
+✔ mã thoát: file sai định dạng -> 2, lỗi tham số -> khác 0
+✔ di chuyển: 6 m/s, xoay theo cam_yaw_deg, chuẩn hóa vector
+✔ nhảy 7 m/s, trọng lực 20: lên khoảng 1.2 m rồi đáp, grounded đổi đúng
+✔ Lướt: 14 m/s trong 12 tick theo hướng đi (đứng yên thì hướng mặt +Z), hồi chiêu 1.5 s từ lúc bắt đầu
+✔ Lướt trên không giữ nguyên độ cao
+✔ Rơi khỏi đảo (Y < -10): -1 Flame, mất hết đom đóm, chờ 60 tick, hồi sinh ở xuất phát + bất tử
+✔ nhặt: XZ ≤ 1.0 (biên tính là trong), đầy thì không nhặt, nhặt không cộng điểm
+✔ đom đóm: 20 lúc đầu trên điểm chuẩn, mỗi 240 tick thêm 1 vào điểm trống, hết điểm thì bỏ lượt
+✔ nạp: trong 2.0 m, +5 mỗi đom đóm nạp, đủ 10 thì thắp lần đầu +100
+✔ Tỏa sáng: tốn 3, bán kính 3D 5 m từ chân + 0.8, choáng 120 tick, đẩy 4 m trong 15 tick, +5
+✔ Tỏa sáng: thiếu 3 đom đóm thì không kích hoạt; hồi chiêu 3 s; trúng con đang choáng vẫn +5
+✔ bị chạm: -1 Flame, rơi floor(carried/2) đom đóm ra vành 1.5–2.5 m (TTL 480 tick), bất tử 90, bóng recoil
+✔ Vùng an toàn 6 m chỉ quanh đèn đã Thắp
+✔ Vùng an toàn: đèn vừa Thắp đẩy Bóng Mực đang ở trong ra mép
+✔ kết thúc: Bình minh thua (dawn), time_left_s lấy từ scenario
+✔ dựng scenario không phát sự kiện (ngoài night_start), không cộng điểm
+✔ Bóng Mực: 2 con ở tick 300, rồi mỗi 480 tick; spawning -> wander; cách Mây >= 15 m; đuổi khi <= 12 m
+✔ Tạm dừng: tick vẫn tăng, sim_tick và thời gian đứng yên, state paused, sự kiện paused/resumed
+✔ Bùa Gió: nhặt như đom đóm, 600 tick, chạy 7.2 m/s, lướt không hồi chiêu, xuất hiện lại sau 2700 tick
+✔ Đêm 2: 6 đèn, bùa C1 ở (35,0,0), bục nhảy bắn sang đảo kia
+✔ Gió Lạc: đuổi khi Mây mang >= 5 và <= 15 m, cướp min(3, mang), bỏ chạy 240 tick rồi removed
+✔ Gió Lạc: Tỏa sáng lúc chase -> flee không cướp; lúc flee có đồ -> thả lại thành đom đóm rơi
+✔ Gió Lạc tự sinh ở Đêm 2 tại tick 1200 (D1), không có ở Đêm 1
+✔ dầu: đèn lit mặc định fuel 100, hao 1/s, xuất 1 chữ số thập phân; hết dầu thì tắt, deposited=0, ever_lit giữ
+✔ thắp lại: đèn ever_lit cần 5 đom đóm, +5 mỗi con +40, relight true, relit_count, sức chứa tăng
+✔ châm dầu: used = min(mang, ceil((100-fuel)/10)), fuel tối đa 100, +5 mỗi con, sự kiện refuel
+✔ sức chứa = 10 + 2*successful_lights, tối đa 20
+✔ Vùng an toàn: fuel < 30 mất vùng, đúng 30 vẫn còn
+✔ Bóng Mực wander tới đèn yếu (fuel < 30), ≤ 2 m thì drain: hút 5/s cộng hao 1/s, fuel_drain mỗi 60 tick, đèn tắt thì về wander
+✔ drain -> chase khi Mây vào trong 6 m; Tỏa sáng trúng con đang drain: tổng +15
+✔ châm dầu lên ≥ 30 đẩy Bóng Mực trong 6 m ra mép
+✔ luật thắng mới: không thắng sớm; bình minh còn sống và ≥ ceil(0.6*5)=3 đèn sáng -> dawn_survived + 50+floor(fuel) mỗi đèn + 50 mỗi Flame
+ℹ tests 37
+ℹ pass 37
+ℹ fail 0

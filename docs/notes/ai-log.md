@@ -20,6 +20,7 @@ Công cụ chính: Claude Code (VS Code extension), model Claude Opus 5.5 / Fabl
 - "/mattpocock-skills:grill-with-docs" → 2 vòng hỏi đáp, chốt Q1–Q21 (`docs/notes/phase-1.md`).
 - "1 ok dùng type script … 5 b …" → chốt stack TS và Vùng an toàn chỉ quanh đèn đã Thắp.
 - Giao subagent: giao diện Three.js (brief có điều khiển, HUD, phong cách PRD), đọc tab Phase 2 qua Safari, review độc lập.
+- "đồ hoạ xấu quá, dùng agent fable /design … 1 option dùng Jack J97, Đom Đóm, Thiên Lý Ơi" → agent tạo 3 theme + `preview.html` (chỉ file mới, không đụng `main.ts` của phiên Phase 2). Option Đom Đóm chỉ dùng mô-típ tự làm (đom đóm, giàn thiên lý), không ảnh/tên trong game. Nhạc "Thiên Lý Ơi": người dùng chọn dùng (dự án học tập, không phát hành); file do người dùng tự đặt ở `public/music/thien-ly-oi.mp3`, đã gitignore nên không vào repo/bài nộp; thiếu file thì game im lặng.
 
 ## Lỗi của AI và cách xử lý
 
