@@ -1,0 +1,14 @@
+Tất định: mỗi kịch bản chạy 2 lần, cmp giống hệt từng byte.
+contract-example: {"type":"end","ticks":444,"state":"lost","score":10}
+default-night:    {"type":"end","ticks":815,"state":"lost","score":0}
+sự kiện contract-example:
+{"type":"event","tick":35,"name":"mote_picked","data":{"carried":1}}
+{"type":"event","tick":264,"name":"player_hit","data":{"by":"shade","flames":2,"dropped":0}}
+{"type":"event","tick":354,"name":"player_hit","data":{"by":"shade","flames":1,"dropped":0}}
+{"type":"event","tick":444,"name":"player_hit","data":{"by":"shade","flames":0,"dropped":0}}
+{"type":"event","tick":444,"name":"game_over","data":{"result":"lost","reason":"no_flames"}}
+sự kiện default-night:
+{"type":"event","tick":635,"name":"player_hit","data":{"by":"shade","flames":2,"dropped":0}}
+{"type":"event","tick":725,"name":"player_hit","data":{"by":"shade","flames":1,"dropped":0}}
+{"type":"event","tick":815,"name":"player_hit","data":{"by":"shade","flames":0,"dropped":0}}
+{"type":"event","tick":815,"name":"game_over","data":{"result":"lost","reason":"no_flames"}}

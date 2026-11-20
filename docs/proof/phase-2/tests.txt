@@ -1,0 +1,24 @@
+✔ game.contract.json có đủ trường bắt buộc của contract v1.0
+✔ tuning trong contract khớp đúng số game đang dùng (chặn lệch số)
+✔ lõi mô phỏng không dùng nguồn không tất định
+✔ định dạng: snapshot tick 0 đầu tiên, snapshot mỗi N tick, dòng end cuối, đúng N bước
+✔ tất định: cùng seed + input ra file giống hệt; khác seed thì khác
+✔ mã thoát: file sai định dạng -> 2, lỗi tham số -> khác 0
+✔ di chuyển: player_speed, xoay theo cam_yaw_deg, chuẩn hóa vector, chặn mép đảo
+✔ nhảy: Y tăng rồi về 0, cạnh lên mới kích hoạt
+✔ nhặt: tự động trong pickup_radius (biên tính là trong), đầy thì không nhặt
+✔ đom đóm: nhặt một sinh một (cách Mây >= 8 m) khi random_motes bật
+✔ nạp và thắp: trong interact_radius, nạp một phần, đủ lantern_cost thì thắp + per_lantern
+✔ tỏa sáng: tốn pulse_cost, choáng đúng pulse_stun_s, đẩy pulse_push_m, cộng per_stun
+✔ tỏa sáng: thiếu ánh sáng thì không có gì; hồi chiêu đúng pulse_cooldown_s; trúng 0 con vẫn có sự kiện
+✔ tỏa sáng trúng con đang Choáng: đẩy lại, vẫn trong stunned_ids, không cộng per_stun lần nữa
+✔ bị chạm: mất 1 Flame, rơi floor(carried*hit_drop_ratio), bất tử invuln_s, hết Flame thì thua
+✔ Vùng an toàn: chỉ quanh đèn đã Thắp, Bóng Mực không bao giờ ở trong safe_radius
+✔ Vùng an toàn: đèn vừa Thắp đẩy Bóng Mực đang ở trong ra mép ngay bước đó
+✔ kết thúc: Bình minh thua (dawn), dừng đúng tick, time_left_s lấy từ scenario
+✔ kết thúc: thắp đèn cuối thì thắng, cộng per_second_left*floor(time_left) + per_flame_left*flames
+✔ dựng scenario không phát sự kiện, không cộng điểm
+✔ Bóng Mực sinh theo nhịp 45 s, cách Mây >= 15 m, có sự kiện shade_spawned
+ℹ tests 21
+ℹ pass 21
+ℹ fail 0
