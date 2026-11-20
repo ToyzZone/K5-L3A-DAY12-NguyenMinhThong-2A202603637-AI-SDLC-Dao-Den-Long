@@ -1,0 +1,19 @@
+name: test
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [20, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: build_cmd (như máy chấm)
+        run: npm ci && npm run build
+      - name: headless_cmd chạy được
+        run: node dist/headless.js --seed 1 --night 1 --ticks 600 --out out.jsonl && tail -1 out.jsonl
+      - name: test
+        run: node --test tests/*.test.mjs
