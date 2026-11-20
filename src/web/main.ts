@@ -196,7 +196,7 @@ function draw(now: number) {
   flash.style.opacity = String(Math.max(0, 1 - (now - hitAt) / 0.6));
 
   const s = Math.ceil(Math.max(0, w.ticksLeft) / TPS);
-  const pulse = p.carried < T.pulse_cost ? 'Thiếu ánh sáng' : w.tick < p.pulseReadyAt ? 'Đang hồi' : 'Sẵn sàng';
+  const pulse = p.carried < T.pulse_cost ? 'Thiếu ánh sáng' : w.simTick < p.pulseCdUntil ? 'Đang hồi' : 'Sẵn sàng';
   hud.innerHTML = `Flame: <b>${p.flames}</b><br>Ánh sáng: <b>${p.carried}/${T.carry_capacity}</b><br>` +
     `Đèn đã thắp: <b>${lit}/${w.lanterns.length}</b><br>Thời gian: <b>${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}</b><br>` +
     `Điểm: <b>${w.score}</b><br>Tỏa sáng (F): <b>${pulse}</b>`;
