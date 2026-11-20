@@ -1,0 +1,3 @@
+# TypeScript + Three.js, lõi mô phỏng tách khỏi phần hiển thị
+
+Game viết bằng TypeScript: lõi mô phỏng là TS thuần (không DOM, không Three.js) dùng chung cho headless và bản có giao diện; headless được build ra JS và chạy bằng `node dist/headless.js` để máy chấm không cần Node mới có hỗ trợ chạy TS trực tiếp; giao diện dùng Three.js + Vite, phát hành dạng web tĩnh. Đã cân nhắc Rust + macroquad (binary headless khoảng 1 MB, nhẹ nhất) và Go + raylib-go, nhưng chọn TS vì trong khung 60 phút mỗi phase, agent viết TS ít vòng sửa lỗi biên dịch hơn, Three.js cho ánh sáng ấm và hiệu ứng phát sáng dễ hơn hẳn, và máy chấm nhiều khả năng có sẵn Node hơn là `cargo` hay `go`.
