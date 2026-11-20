@@ -51,6 +51,7 @@ const { server, url } = await serve({
       os: `${os.type()} ${os.release()} ${os.arch()} · ${os.cpus()[0]?.model ?? '?'} · ${Math.round(os.totalmem() / 2 ** 30)} GB RAM`,
     };
     writeFileSync(out, JSON.stringify(result, null, 2) + '\n');
+    if (env.BENCH_DUMP) writeFileSync(env.BENCH_DUMP, JSON.stringify(dts));
     console.log(JSON.stringify(result, null, 2));
     clearTimeout(timer);
     server.close();

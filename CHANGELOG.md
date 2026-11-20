@@ -1,5 +1,18 @@
 # Changelog
 
+## phase-4 / v1.0.0: contract v1.3 (Ticket-04 "Bình minh v1.0.0")
+
+Không có luật [THAY THẾ]. Đầu ra headless của Đêm 1–3 giữ nguyên từng byte (so 18 lần chạy trước và sau).
+- **Contract v1.3:**
+  - thêm `bench_cmd` (`node scripts/bench.mjs`) và `soak_cmd` (`node --jitless --max-semi-space-size=1 dist/soak.js`);
+  - `run_cmd` đổi thành `node scripts/play.mjs`, vì `npm run play --export-leaderboard` sẽ bị npm nuốt mất cờ.
+- **Build:** `npm run build` = `tsc && vite build`, nên `build_cmd` tạo đủ `dist/` cho headless, soak, bench và chơi.
+- **Benchmark:** cảnh chuẩn `?bench`. Sim có cờ `World.bench` tắt sinh thêm, sát thương, nhặt, hao dầu, chuyển `wander` → `chase` và kết thúc Đêm; headless không bao giờ bật cờ này.
+- **Soak test:** 10 Đêm trong một tiến trình, ghi `soak.json`.
+- **Bảng xếp hạng cục bộ:** lưu `leaderboard.json` trên đĩa, có màn hình xem, nhập tên khi thua hoặc khi tới Bình Minh, xuất bằng `--export-leaderboard`.
+- **Hỗ trợ tiếp cận:** đổi phím (báo trùng, khôi phục mặc định), phụ đề và chỉ báo hình, giảm chuyển động, chữ ≥ 18 px và chữ lớn ×1.25.
+- **Phát hành:** README đủ mục, CREDITS, LICENSE (MIT), bản Release chỉ cần Node để chạy.
+
 ## phase-3: contract v1.2 (Ticket-03 "Đèn cạn dầu")
 
 ### Breaking changes
