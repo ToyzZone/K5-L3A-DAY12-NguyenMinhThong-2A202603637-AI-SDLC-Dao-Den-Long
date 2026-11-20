@@ -25,7 +25,8 @@ export interface Mote { id: string; pos: Vec3; kind: 'random' | 'dropped'; point
 export interface Shade { id: string; pos: Vec3; state: ShadeState; until: number; knockUntil: number; dir: [number, number] }
 export interface Lantern { id: string; pos: Vec3; lit: boolean; deposited: number }
 export interface Charm { id: string; pos: Vec3; available: boolean; respawnAt: number }
-export interface Drifter { id: string; pos: Vec3; state: string; stolen: number }
+// Gió Lạc: idle -> chase -> flee -> removed. until = tick biến mất khi flee; target = điểm lượn khi idle.
+export interface Drifter { id: string; pos: Vec3; state: 'idle' | 'chase' | 'flee' | 'removed'; stolen: number; until: number; target: Vec3 | null; dir: [number, number] }
 export interface Player {
   pos: Vec3;
   vel: Vec3;
@@ -73,8 +74,10 @@ export interface World {
   drifters: Drifter[];
   randomMotes: boolean;
   randomShades: boolean;
+  randomDrifters: boolean;
   moteSeq: number;
   shadeSeq: number;
+  drifterSeq: number;
   rng: () => number;
   prev: Record<Button, boolean>;
 }
@@ -134,12 +137,16 @@ export function createWorld(seed: number, sc: Scenario = {}, night = 1): World {
       available: (c as { available?: boolean }).available ?? true,
       respawnAt: 0,
     })),
-    // ponytail: Gió Lạc chưa có hành vi (chưa đạt Phase 2); chỉ giữ để snapshot đúng định dạng.
-    drifters: (sc.drifters ?? []).map((d, i) => ({ id: d.id ?? `D${i + 1}`, pos: [...d.pos], state: d.state ?? 'idle', stolen: d.stolen ?? 0 })),
+    drifters: (sc.drifters ?? []).map((d, i) => {
+      const state = (d.state ?? 'idle') as Drifter['state'];
+      return { id: d.id ?? `D${i + 1}`, pos: [...d.pos] as Vec3, state, stolen: d.stolen ?? 0, until: state === 'flee' ? R.drifter_flee_ticks : 0, target: null, dir: [1, 0] as [number, number] };
+    }),
     randomMotes: sc.random_motes ?? true,
     randomShades: sc.random_shades ?? true,
+    randomDrifters: sc.random_drifters ?? map.drifters,
     moteSeq: 0,
     shadeSeq: 0,
+    drifterSeq: sc.drifters?.length ?? 0,
     rng: mulberry32(seed),
     prev: { jump: false, interact: false, pulse: false, dash: false, pause: false },
   };
@@ -191,6 +198,17 @@ function spawnShade(w: World, t: number): Shade | null {
   const s: Shade = { id: newShadeId(w), pos: [pt[0], pt[1] + R.shade_y, pt[2]], state: 'spawning', until: t + 1, knockUntil: 0, dir: [1, 0] };
   w.shades.push(s);
   return s;
+}
+
+// Đom đóm rơi: n con trên vành [minR, minR + 1] m quanh `at`, tồn tại drop_ttl tick.
+function dropMotes(w: World, at: Vec3, n: number, minR: number, t: number): void {
+  for (let i = 0; i < n; i++) {
+    const a = w.rng() * 2 * Math.PI;
+    const r = minR + (minR > 0 ? w.rng() : 0);
+    const x = at[0] + r * Math.cos(a);
+    const z = at[2] + r * Math.sin(a);
+    w.motes.push({ id: `M${++w.moteSeq}`, pos: [r3(x), w.map.ground(x, z) ?? 0, r3(z)], kind: 'dropped', point: -1, expires: t + R.drop_ttl });
+  }
 }
 
 function pushOutOfSafeZones(w: World, s: Shade): void {
@@ -358,6 +376,19 @@ export function step(w: World, inp: Input): GameEvent[] {
       w.score += T.score.per_stun;
       stunned.push(s.id);
     }
+    for (const d of w.drifters) {
+      if (Math.hypot(d.pos[0] - c[0], d.pos[1] - c[1], d.pos[2] - c[2]) > T.pulse_radius + EPS) continue;
+      if (d.state === 'chase') { // trúng lúc đuổi: bỏ chạy, không cướp
+        d.state = 'flee';
+        d.until = t + R.drifter_flee_ticks;
+        d.dir = awayXZ(p.pos, d.pos);
+      } else if (d.state === 'flee' && d.stolen > 0) { // trúng lúc chạy có đồ: thả hết, biến mất sau 120 tick
+        emit('drifter_drop', { drifter_id: d.id, amount: d.stolen });
+        dropMotes(w, d.pos, d.stolen, 0, t);
+        d.stolen = 0;
+        d.until = t + R.drifter_vanish_ticks;
+      }
+    }
     emit('pulse', { stunned_ids: stunned });
   }
 
@@ -381,8 +412,45 @@ export function step(w: World, inp: Input): GameEvent[] {
     s.pos[2] += dir[1] * stepLen;
     pushOutOfSafeZones(w, s);
   }
+  // Gió Lạc: không bị Vùng an toàn chặn.
+  for (const d of w.drifters) {
+    if (d.state === 'removed') continue;
+    let dir = d.dir;
+    let stepLen = R.drifter_speed / TPS;
+    if (d.state === 'flee') {
+      if (t >= d.until) { d.state = 'removed'; continue; }
+    } else {
+      const dist = distXZ(d.pos, p.pos);
+      d.state = !p.falling && p.carried >= R.drifter_min_carried && dist <= R.drifter_detect + EPS ? 'chase' : 'idle';
+      if (d.state === 'chase') {
+        stepLen = Math.min(stepLen, dist);
+        dir = dist > 1e-9 ? [(p.pos[0] - d.pos[0]) / dist, (p.pos[2] - d.pos[2]) / dist] : [0, 0];
+      } else { // lượn chậm tới một điểm sương ngẫu nhiên
+        if (!d.target || distXZ(d.pos, d.target) < 0.5) d.target = w.map.shadePoints[Math.floor(w.rng() * w.map.shadePoints.length)];
+        const dt = distXZ(d.pos, d.target);
+        stepLen = Math.min(R.drifter_idle_speed / TPS, dt);
+        dir = dt > 1e-9 ? [(d.target[0] - d.pos[0]) / dt, (d.target[2] - d.pos[2]) / dt] : [0, 0];
+      }
+    }
+    d.dir = dir;
+    d.pos[0] += dir[0] * stepLen;
+    d.pos[2] += dir[1] * stepLen;
+  }
 
-  // 9. Chạm: Bóng Mực theo id tăng dần, tối đa 1 Flame mỗi tick.
+  // 9. Chạm: Gió Lạc cướp trước (bất tử không ngăn), rồi Bóng Mực.
+  if (!p.falling) {
+    for (const d of [...w.drifters].sort((a, b) => byId(a.id, b.id))) {
+      if ((d.state !== 'idle' && d.state !== 'chase') || p.carried <= 0 || distXZ(d.pos, p.pos) > R.drifter_touch + EPS) continue;
+      const amount = Math.min(R.drifter_steal, p.carried);
+      p.carried -= amount;
+      d.stolen = amount;
+      d.state = 'flee';
+      d.until = t + R.drifter_flee_ticks;
+      d.dir = awayXZ(p.pos, d.pos);
+      emit('drifter_steal', { drifter_id: d.id, amount, carried: p.carried });
+    }
+  }
+  // Bóng Mực theo id tăng dần, tối đa 1 Flame mỗi tick.
   if (!p.falling && t >= p.invulnUntil) {
     const hitter = [...w.shades]
       .sort((a, b) => byId(a.id, b.id))
@@ -391,13 +459,7 @@ export function step(w: World, inp: Input): GameEvent[] {
       p.flames -= 1;
       const dropped = Math.floor(p.carried * T.hit_drop_ratio);
       p.carried -= dropped;
-      for (let i = 0; i < dropped; i++) {
-        const a = w.rng() * 2 * Math.PI;
-        const r = 1.5 + w.rng();
-        const x = p.pos[0] + r * Math.cos(a);
-        const z = p.pos[2] + r * Math.sin(a);
-        w.motes.push({ id: `M${++w.moteSeq}`, pos: [r3(x), w.map.ground(x, z) ?? 0, r3(z)], kind: 'dropped', point: -1, expires: t + R.drop_ttl });
-      }
+      dropMotes(w, p.pos, dropped, 1.5, t);
       p.invulnUntil = t + R.invuln_ticks;
       hitter.state = 'recoil';
       hitter.until = t + R.recoil_ticks;
@@ -408,6 +470,10 @@ export function step(w: World, inp: Input): GameEvent[] {
 
   // 10. Sinh theo lịch (thực thể mới tương tác từ tick sau).
   if (w.randomMotes && t % R.mote_every === 0 && w.motes.length < R.mote_cap) spawnMoteAtPoint(w);
+  if (w.randomDrifters && t % R.drifter_every === 0 && w.drifters.filter((d) => d.state !== 'removed').length < R.drifter_max) {
+    const pt = w.map.shadePoints[Math.floor(w.rng() * w.map.shadePoints.length)];
+    w.drifters.push({ id: `D${++w.drifterSeq}`, pos: [pt[0], pt[1] + R.shade_y, pt[2]], state: 'idle', stolen: 0, until: 0, target: null, dir: [1, 0] });
+  }
   if (w.randomShades && t >= R.shade_first && (t - R.shade_first) % w.map.shadeEvery === 0) {
     for (let i = 0; i < (t === R.shade_first ? 2 : 1); i++) {
       if (w.shades.length >= w.map.shadeMax) break;

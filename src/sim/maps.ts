@@ -14,6 +14,7 @@ export interface NightMap {
   shadeSpeed: number;
   charms: V3[];
   pads: JumpPad[];
+  drifters: boolean; // Gió Lạc tự sinh (Đêm 2, 3)
   ground: (x: number, z: number) => number | null; // null = không có đất (rơi)
 }
 
@@ -38,6 +39,7 @@ const night1: NightMap = {
   shadeSpeed: 4,
   charms: [],
   pads: [],
+  drifters: false,
   ground: (x, z) => (within(x, z, 0, 0, 40) ? 0 : null),
 };
 
@@ -56,6 +58,7 @@ const night2: NightMap = {
     { pos: [20, 0, 18], target: [70, 0, 0], vy: 14, vh: 24 },
     { pos: [50, 0, -18], target: [0, 0, 0], vy: 14, vh: 24 },
   ],
+  drifters: true,
   ground: (x, z) => (within(x, z, 0, 0, 28) || within(x, z, 70, 0, 28) || (x >= 26 && x <= 44 && Math.abs(z) <= 2) ? 0 : null),
 };
 

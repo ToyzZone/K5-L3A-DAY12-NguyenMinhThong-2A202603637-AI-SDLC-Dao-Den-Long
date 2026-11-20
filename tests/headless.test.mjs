@@ -254,3 +254,32 @@ test('Đêm 2: 6 đèn, bùa C1 ở (35,0,0), bục nhảy bắn sang đảo kia
   assert.equal(end.grounded, true);
   assert.ok(distXZ(end.pos, [70, 0, 0]) <= 28, `đáp ở ${end.pos}`);
 });
+
+test('Gió Lạc: đuổi khi Mây mang >= 5 và <= 15 m, cướp min(3, mang), bỏ chạy 240 tick rồi removed', () => {
+  const r = run({ scenario: { ...QUIET, player: { carried: 6 }, drifters: [{ id: 'D1', pos: [5, 1, 0] }] }, ticks: 300, extraArgs: ['--night', '2'] });
+  const steal = r.events.find((e) => e.name === 'drifter_steal');
+  assert.deepEqual(steal.data, { drifter_id: 'D1', amount: 3, carried: 3 });
+  assert.equal(r.snap(1).drifters[0].state, 'chase');
+  assert.deepEqual(r.snap(steal.tick).drifters[0].stolen, 3);
+  assert.equal(r.snap(steal.tick).drifters[0].state, 'flee');
+  assert.equal(r.snap(steal.tick + 240).drifters[0].state, 'removed');
+  const calm = run({ scenario: { ...QUIET, player: { carried: 4 }, drifters: [{ id: 'D1', pos: [5, 1, 0] }] }, ticks: 5, extraArgs: ['--night', '2'] });
+  assert.equal(calm.snap(5).drifters[0].state, 'idle');
+});
+
+test('Gió Lạc: Tỏa sáng lúc chase -> flee không cướp; lúc flee có đồ -> thả lại thành đom đóm rơi', () => {
+  const chase = run({ scenario: { ...QUIET, player: { carried: 8 }, drifters: [{ id: 'D1', pos: [4, 1, 0], state: 'chase' }] }, inputs: { frames: press('pulse', 0) }, ticks: 30, extraArgs: ['--night', '2'] });
+  assert.equal(chase.snap(1).drifters[0].state, 'flee');
+  assert.ok(!chase.events.some((e) => e.name === 'drifter_steal'));
+  const loot = run({ scenario: { ...QUIET, player: { carried: 3 }, drifters: [{ id: 'D1', pos: [3, 1, 0], state: 'flee', stolen: 3 }] }, inputs: { frames: press('pulse', 0) }, ticks: 130, extraArgs: ['--night', '2'] });
+  assert.deepEqual(loot.events.find((e) => e.name === 'drifter_drop').data, { drifter_id: 'D1', amount: 3 });
+  assert.equal(loot.snap(1).motes.filter((m) => m.kind === 'dropped').length, 3);
+  assert.equal(loot.snap(121).drifters[0].state, 'removed');
+});
+
+test('Gió Lạc tự sinh ở Đêm 2 tại tick 1200 (D1), không có ở Đêm 1', () => {
+  const r = run({ scenario: { random_motes: false, motes: [], random_shades: false }, ticks: 1200, every: 1200, extraArgs: ['--night', '2'] });
+  assert.deepEqual(r.snap(1200).drifters.map((d) => [d.id, d.state]), [['D1', 'idle']]);
+  const n1 = run({ scenario: { random_motes: false, motes: [], random_shades: false }, ticks: 1200, every: 1200 });
+  assert.deepEqual(n1.snap(1200).drifters, []);
+});

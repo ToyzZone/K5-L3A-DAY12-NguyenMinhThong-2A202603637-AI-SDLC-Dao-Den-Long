@@ -56,6 +56,16 @@ export const RULES = {
   shade_first: 300,
   shade_min_dist: 15,
   shade_y: 1, // giả định: tâm Bóng Mực cao 1 m trên mặt đất
+  drifter_speed: 7,
+  drifter_idle_speed: 2,
+  drifter_max: 2,
+  drifter_every: 1200,
+  drifter_min_carried: 5,
+  drifter_detect: 15,
+  drifter_touch: 1.2,
+  drifter_steal: 3,
+  drifter_flee_ticks: 240,
+  drifter_vanish_ticks: 120,
 };
 
 export const TPS = 60;
