@@ -22,5 +22,6 @@ Game 3D bằng TypeScript. Lõi mô phỏng thuần ở `src/sim/` (tất địn
 - Phần sáng tạo thêm chỉ nằm ở `src/web/` và không được đổi đầu ra headless.
 - Test viết trên đầu ra JSONL của `dist/headless.js`, không trên state nội bộ.
 - Không sửa tay file trong `docs/proof/`; chỉ sinh lại bằng `scripts/proof.sh`.
+- Trước khi gắn tag: `git status` sạch, rồi clone sạch repo, chạy `build_cmd` và `npm test` trong bản clone. Test xanh trên máy không chứng minh được gì nếu file chưa commit.
 - Yêu cầu mới làm sai test cũ: sửa hoặc xóa test kèm lý do trong `docs/notes/`, không skip âm thầm.
 - Không commit `.env`, key, token.
