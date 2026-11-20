@@ -4,3 +4,5 @@ dist/
 *.jsonl
 !docs/proof/**/*.jsonl
 .DS_Store
+# Nhạc người chơi tự đặt (vd. Thiên Lý Ơi): có bản quyền, không commit, không nộp (RULES §8)
+public/music/

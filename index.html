@@ -5,24 +5,56 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Đảo Đèn Lồng</title>
   <style>
-    html, body { margin: 0; height: 100%; overflow: hidden; background: #07050f; font-family: system-ui, sans-serif; color: #ffe6b0; }
+    :root { --text: #F5F1E6; --gold: #F2C14E; --danger: #FF5A5F; --red: #C8102E; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #0E1430; font-family: system-ui, sans-serif; color: var(--text); }
     canvas { display: block; touch-action: none; cursor: grab; }
     .ov { position: fixed; pointer-events: none; text-shadow: 0 1px 4px #000; }
-    #hud { top: 12px; left: 14px; line-height: 1.55; font-size: 15px; background: #0b0716aa; padding: 8px 12px; border-radius: 10px; }
-    #hud b { color: #ffb84d; }
-    #prompt { bottom: 70px; left: 0; right: 0; text-align: center; font-size: 18px; color: #ffd27a; }
-    #help { bottom: 10px; left: 14px; right: 14px; font-size: 13px; opacity: .75; }
-    #flash { inset: 0; background: radial-gradient(transparent 40%, #5a1a8acc); opacity: 0; }
-    #end { inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; background: #07050fcc; font-size: 20px; gap: 8px; }
-    #end h1 { margin: 0; font-size: 48px; color: #ffb84d; }
+    #hud { inset: 0; display: none; }
+    #hud > * { position: absolute; }
+    #flames { top: 14px; left: 16px; display: flex; gap: 8px; align-items: center; font-size: 14px; }
+    .fl { width: 18px; height: 18px; background: #FFB347; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); box-shadow: 0 0 10px #FFB347; }
+    .fl.off { background: #3a3450; box-shadow: none; }
+    #timer { top: 10px; left: 50%; transform: translateX(-50%); font-size: 30px; font-weight: 700; }
+    #timer.danger { color: var(--danger); animation: blink .8s steps(2) infinite; }
+    @keyframes blink { 50% { opacity: .3; } }
+    #tr { top: 12px; right: 16px; text-align: right; font-size: 16px; line-height: 1.5; }
+    #tr b { color: var(--gold); font-size: 20px; }
+    #motebar { bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; gap: 5px; }
+    #motebar i { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #FFE58A66; }
+    #motebar i.on { background: #FFF6C2; border-color: #FFE58A; box-shadow: 0 0 10px #FFE58A; }
+    #cds { bottom: 16px; right: 16px; display: flex; gap: 12px; }
+    .cd { width: 54px; height: 54px; border-radius: 50%; border: 3px solid var(--gold); display: grid; place-items: center; font-size: 11px; font-weight: 700; background: #FFB34755; }
+    .cd.off { border-color: #5B5F6E; background: #5B5F6E55; }
+    .cd.charm { border-color: var(--red); }
+    #prompt { bottom: 64px; left: 0; right: 0; text-align: center; font-size: 19px; color: #FFE9B0; }
+    #arrow { width: 26px; height: 26px; background: #FFB347; clip-path: polygon(0 15%, 100% 50%, 0 85%, 22% 50%); filter: drop-shadow(0 0 6px #FFB347); }
+    #help { bottom: 86px; left: 16px; font-size: 12px; opacity: .6; max-width: 260px; line-height: 1.5; }
+    #fps { top: 70px; left: 16px; font: 12px monospace; }
+    #flash { inset: 0; background: radial-gradient(transparent 40%, #7A3CFFcc); opacity: 0; }
+    #panel { position: fixed; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: #0E1430cc; text-align: center; padding: 16px; }
+    #panel h1 { margin: 0; font-size: 46px; color: var(--gold); }
+    #panel h2 { margin: 0; font-weight: 400; letter-spacing: 2px; }
+    #panel p { margin: 4px 0; max-width: 520px; }
+    #panel .quote { font-style: italic; color: #FFE9B0; }
+    #panel button { font: inherit; font-size: 18px; min-width: 220px; padding: 8px 18px; border-radius: 22px; border: 2px solid var(--gold); background: #1B2350; color: var(--text); cursor: pointer; }
+    #panel button:hover, #panel button:focus-visible { background: #F2C14E33; }
+    #panel label { display: flex; gap: 10px; align-items: center; }
   </style>
 </head>
 <body>
-  <div id="hud" class="ov"></div>
-  <div id="prompt" class="ov"></div>
-  <div id="help" class="ov">WASD: di chuyển · Kéo chuột hoặc ←/→: xoay camera · Space: nhảy · E: nạp đèn · F: tỏa sáng · R: chơi lại (khi kết thúc)</div>
+  <div id="hud" class="ov">
+    <div id="flames"></div>
+    <div id="timer"></div>
+    <div id="tr"></div>
+    <div id="motebar"></div>
+    <div id="cds"><div class="cd" id="cd-dash">Lướt</div><div class="cd" id="cd-pulse">Tỏa</div></div>
+    <div id="prompt"></div>
+    <div id="arrow"></div>
+    <div id="help">WASD di chuyển · kéo chuột hoặc ←/→ xoay camera · Space nhảy · Shift lướt · E nạp đèn · F tỏa sáng · P/Esc tạm dừng</div>
+    <div id="fps"></div>
+  </div>
   <div id="flash" class="ov"></div>
-  <div id="end" class="ov"><h1 id="end-title"></h1><div id="end-reason"></div><div id="end-score"></div><div>Nhấn R để chơi lại</div></div>
+  <div id="panel"></div>
   <script type="module" src="/src/web/main.ts"></script>
 </body>
 </html>
