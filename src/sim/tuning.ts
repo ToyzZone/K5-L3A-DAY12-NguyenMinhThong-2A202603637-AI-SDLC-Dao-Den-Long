@@ -82,6 +82,10 @@ export const RULES = {
   drain_exit_chase: 6,
   fuel_drain_every: 60,
   capacity_step: 2,
+  step_up: 0.35, // giả định: bậc cao nhất đi lên được (dốc lên ~0.05 m/tick); cao hơn là vách
+  wind_every: 1800,
+  wind_ticks: 300,
+  wind_speed: 2,
 };
 
 export const TPS = 60;

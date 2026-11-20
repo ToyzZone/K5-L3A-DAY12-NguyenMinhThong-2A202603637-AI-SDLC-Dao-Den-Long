@@ -367,3 +367,42 @@ test('luật thắng mới: không thắng sớm; bình minh còn sống và ≥
   assert.deepEqual(two.events.at(-1).data, { result: 'lost', reason: 'dawn' });
   assert.equal(two.end.score, 0);
 });
+
+// ---- Đêm 3 (Ticket-02 Phần 2): tầng, vách, dốc, tháp, bục nhảy, gió ----
+const n3 = (scenario, inputs, ticks, every = 1) => run({ scenario: { ...QUIET, wind_enabled: false, ...scenario }, inputs, ticks, every, extraArgs: ['--night', '3'] });
+
+test('Đêm 3: 7 đèn, 300 s, 2 bùa, Bóng Mực 4.5 m/s', () => {
+  const s0 = n3({}, undefined, 1).snap(0);
+  assert.deepEqual([s0.night, s0.lanterns.length, s0.time_left_s, s0.charms.length], [3, 7, 300, 2]);
+  assert.deepEqual(s0.lanterns[0].pos, [0, 6, 6]);
+  const r = n3({ player: { pos: [0, 0, -28] }, shades: [{ id: 'S1', pos: [10, 1, -28] }] }, undefined, 60);
+  assert.equal(r.snap(60).shades[0].pos[0], 10 - 4.5);
+});
+
+test('Đêm 3: vách tầng 1 chặn đi ngang; dốc 30° đưa lên Y=3; tháp chuông không đi xuyên', () => {
+  const wall = n3({ player: { pos: [0, 0, 10] } }, { frames: [{ tick: 0, move: [0, 1] }] }, 60).snap(60).player;
+  assert.ok(wall.pos[2] <= 12 && wall.pos[1] === 0, `vách: ${wall.pos}`);
+  const c = Math.cos(Math.PI / 6), s = Math.sin(Math.PI / 6);
+  const ramp = n3({ player: { pos: [30 * c, 0, 30 * s] } }, { frames: [{ tick: 0, move: [-c, -s] }, { tick: 60, move: [0, 0] }] }, 70).snap(70).player;
+  assert.ok(Math.abs(ramp.pos[1] - 3) < 0.01 && ramp.grounded, `dốc: ${ramp.pos}`);
+  const tower = n3({ player: { pos: [0, 6, 5] } }, { frames: [{ tick: 0, move: [0, -1] }] }, 60).snap(60).player;
+  assert.ok(tower.pos[2] >= 2 && tower.pos[1] === 6, `tháp: ${tower.pos}`);
+});
+
+test('Đêm 3: bục nhảy (0,3,13) bắn lên tầng 2', () => {
+  const p = n3({ player: { pos: [0, 3, 13] } }, undefined, 90).snap(90).player;
+  assert.equal(p.pos[1], 6);
+  assert.ok(p.grounded && Math.hypot(p.pos[0], p.pos[2]) <= 8, `${p.pos}`);
+});
+
+test('Đêm 3: gió mạnh mỗi 30 s kéo dài 5 s, đẩy Mây 2 m/s; tắt bằng wind_enabled', () => {
+  const r = n3({ wind_enabled: true, player: { pos: [0, 0, -28] } }, undefined, 2101, 1);
+  assert.equal(r.snap(1799).wind.active, false);
+  assert.equal(r.snap(1800).wind.active, true);
+  assert.equal(r.snap(2099).wind.active, true);
+  assert.equal(r.snap(2100).wind.active, false);
+  const moved = distXZ(r.snap(2100).player.pos, r.snap(1799).player.pos);
+  assert.ok(moved > 9.5 && moved <= 10.01, `gió đẩy ${moved} m`);
+  const calm = n3({ player: { pos: [0, 0, -28] } }, undefined, 2100, 2100);
+  assert.deepEqual(calm.snap(2100).player.pos, [0, 0, -28]);
+});

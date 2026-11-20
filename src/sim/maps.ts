@@ -15,6 +15,7 @@ export interface NightMap {
   charms: V3[];
   pads: JumpPad[];
   drifters: boolean; // Gió Lạc tự sinh (Đêm 2, 3)
+  wind?: boolean; // gió mạnh (Đêm 3)
   ground: (x: number, z: number) => number | null; // null = không có đất (rơi)
 }
 
@@ -62,5 +63,39 @@ const night2: NightMap = {
   ground: (x, z) => (within(x, z, 0, 0, 28) || within(x, z, 70, 0, 28) || (x >= 26 && x <= 44 && Math.abs(z) <= 2) ? 0 : null),
 };
 
-// ponytail: Đêm 3 (tầng, vách, dốc, tháp, gió) chưa làm; --night 3 báo lỗi rõ ràng.
-export const MAPS: Record<number, NightMap> = { 1: night1, 2: night2 };
+// Đêm 3: mỗi điểm (x, z) là một cột đặc; ground = đỉnh cột. Vách đứng sinh ra tự nhiên vì
+// game.ts chặn bước ngang khi đỉnh cột mới cao hơn chân Mây quá STEP_UP.
+function night3Ground(x: number, z: number): number | null {
+  const r = Math.hypot(x, z);
+  if (r > 45) return null;
+  let h = 0;
+  if (r >= 12 && r <= 24 && z > 0) h = 3; // tầng 1: vành khăn nửa z > 0
+  for (const deg of [30, 150]) { // dốc rộng 3 m: chân r 30 (Y 0) -> đỉnh r 24 (Y 3)
+    const a = (deg * Math.PI) / 180;
+    const along = x * Math.cos(a) + z * Math.sin(a);
+    const lateral = Math.abs(-x * Math.sin(a) + z * Math.cos(a));
+    if (lateral <= 1.5 && along >= 24 && along <= 30) h = Math.max(h, (3 * (30 - along)) / 6);
+  }
+  if (r <= 8) h = 6; // tầng 2
+  if (r <= 2) h = 14; // tháp chuông cao 8 m trên tầng 2, không leo được
+  return h;
+}
+
+const night3: NightMap = {
+  night: 3,
+  duration_s: 300,
+  start: [0, 0, -28], // giả định: tâm đảo là tháp chuông nên xuất phát ở tầng 0 phía nam
+  lanterns: [[0, 6, 6], [18, 3, 10], [-18, 3, 10], [35, 0, -10], [-35, 0, -10], [20, 0, -35], [-20, 0, -35]],
+  motePoints: [...ring(18, 34, 0, 20), ...ring(8, 18, 20, 20, 0, 3), ...ring(4, 5, 45, 90, 0, 6)],
+  shadePoints: ring(16, 43, 0, 22.5),
+  shadeEvery: 360,
+  shadeMax: 10,
+  shadeSpeed: 4.5,
+  charms: [[30, 0, 25], [-30, 0, 25]],
+  pads: [{ pos: [0, 3, 13], target: [0, 3, 0], vy: 12, vh: 8 }],
+  drifters: true,
+  wind: true,
+  ground: night3Ground,
+};
+
+export const MAPS: Record<number, NightMap> = { 1: night1, 2: night2, 3: night3 };

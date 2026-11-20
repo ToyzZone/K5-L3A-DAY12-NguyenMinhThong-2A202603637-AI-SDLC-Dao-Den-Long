@@ -78,6 +78,9 @@ export interface World {
   randomMotes: boolean;
   randomShades: boolean;
   randomDrifters: boolean;
+  windEnabled: boolean;
+  windUntil: number;
+  windDir: number;
   moteSeq: number;
   shadeSeq: number;
   drifterSeq: number;
@@ -155,6 +158,9 @@ export function createWorld(seed: number, sc: Scenario = {}, night = 1): World {
     randomMotes: sc.random_motes ?? true,
     randomShades: sc.random_shades ?? true,
     randomDrifters: sc.random_drifters ?? map.drifters,
+    windEnabled: sc.wind_enabled ?? map.wind ?? false,
+    windUntil: 0,
+    windDir: 0,
     moteSeq: 0,
     shadeSeq: 0,
     drifterSeq: sc.drifters?.length ?? 0,
@@ -276,11 +282,24 @@ function movePlayer(w: World, inp: Input, E: Record<Button, boolean>, t: number,
     if (E.jump && p.grounded) p.vel[1] = R.jump_speed;
     p.vel[1] -= R.gravity / TPS;
   }
-  p.pos[0] += p.vel[0] / TPS;
+  const [ox, oz] = [p.pos[0], p.pos[2]];
+  let wx = 0;
+  let wz = 0;
+  if (t < w.windUntil) {
+    const a = (w.windDir * Math.PI) / 180;
+    wx = (Math.cos(a) * R.wind_speed) / TPS;
+    wz = (Math.sin(a) * R.wind_speed) / TPS;
+  }
+  p.pos[0] += p.vel[0] / TPS + wx;
   p.pos[1] += p.vel[1] / TPS;
-  p.pos[2] += p.vel[2] / TPS;
+  p.pos[2] += p.vel[2] / TPS + wz;
+  const gNew = w.map.ground(p.pos[0], p.pos[2]);
+  if (gNew !== null && gNew > prevY + R.step_up) { // vách đứng / tháp: không đi ngang vào được
+    p.pos[0] = ox;
+    p.pos[2] = oz;
+  }
   const g = w.map.ground(p.pos[0], p.pos[2]);
-  if (g !== null && p.pos[1] <= g && prevY >= g - 1e-6) {
+  if (g !== null && p.pos[1] <= g && prevY >= g - R.step_up) {
     p.pos[1] = g;
     p.vel[1] = 0;
     p.grounded = true;
@@ -288,7 +307,7 @@ function movePlayer(w: World, inp: Input, E: Record<Button, boolean>, t: number,
   } else p.grounded = false;
 
   for (const pad of w.map.pads) {
-    if (!p.grounded || distXZ(p.pos, pad.pos) > 1 + EPS) continue;
+    if (!p.grounded || distXZ(p.pos, pad.pos) > 1 + EPS || Math.abs(p.pos[1] - pad.pos[1]) > 0.5) continue;
     const [ux, uz] = awayXZ(p.pos, pad.target);
     p.launch = [ux * pad.vh, uz * pad.vh];
     p.vel = [p.launch[0], pad.vy, p.launch[1]];
@@ -328,6 +347,10 @@ export function step(w: World, inp: Input): GameEvent[] {
   w.ticksLeft -= 1;
   w.motes = w.motes.filter((m) => m.kind !== 'dropped' || t < m.expires);
   for (const c of w.charms) if (!c.available && t >= c.respawnAt) c.available = true;
+  if (w.windEnabled && t % R.wind_every === 0) { // gió mạnh: mỗi 30 s, 5 s, hướng ngẫu nhiên
+    w.windUntil = t + R.wind_ticks;
+    w.windDir = r3(w.rng() * 360);
+  }
   // Dầu đèn: tự hao 1/s + mỗi Bóng Mực đang hút 5/s (đơn vị 1/60 nên trừ thẳng theo tick); hết dầu thì tắt ngay.
   for (const l of w.lanterns) {
     if (!l.lit) continue;
@@ -471,6 +494,8 @@ export function step(w: World, inp: Input): GameEvent[] {
     s.pos[0] += dir[0] * stepLen;
     s.pos[2] += dir[1] * stepLen;
     pushOutOfSafeZones(w, s);
+    const sg = w.map.ground(s.pos[0], s.pos[2]);
+    if (sg !== null && stepLen > 0) s.pos[1] = Math.min(sg, 6) + R.shade_y; // lướt theo địa hình (bỏ qua tháp)
   }
   // Gió Lạc: không bị Vùng an toàn chặn.
   for (const d of w.drifters) {
@@ -575,7 +600,7 @@ export function snapshot(w: World) {
     state: w.state,
     time_left_s: r3(Math.max(0, w.ticksLeft) / TPS),
     score: w.score,
-    wind: { active: false, dir_deg: 0 },
+    wind: { active: t < w.windUntil, dir_deg: w.windDir },
     player: {
       pos: v3(p.pos),
       vel: v3(p.vel),
