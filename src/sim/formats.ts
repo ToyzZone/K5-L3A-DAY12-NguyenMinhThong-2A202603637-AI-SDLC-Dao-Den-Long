@@ -1,5 +1,5 @@
-// Kiểm tra file inputs / scenario theo Test Contract v1.0. Sai định dạng -> FormatError (headless thoát mã 2).
-import { LANTERN_IDS, type Scenario, type Vec3 } from './game.js';
+// Kiểm tra file inputs / scenario theo Test Contract v1.1. Sai định dạng -> FormatError (headless thoát mã 2).
+import { lanternIds, type Scenario, type ShadeState, type Vec3 } from './game.js';
 
 export class FormatError extends Error {}
 export interface Frame {
@@ -10,8 +10,10 @@ export interface Frame {
   interact?: boolean;
   pulse?: boolean;
   dash?: boolean;
+  pause?: boolean;
 }
 type Obj = Record<string, unknown>;
+const SHADE_STATES: ShadeState[] = ['spawning', 'wander', 'chase', 'recoil', 'stunned'];
 
 function bad(msg: string): never {
   throw new FormatError(msg);
@@ -35,11 +37,16 @@ function int(x: unknown, what: string): number {
 function bool(x: unknown, what: string): boolean {
   return typeof x === 'boolean' ? x : bad(`${what} phải là boolean`);
 }
+function str(x: unknown, what: string): string {
+  return typeof x === 'string' && x ? x : bad(`${what} phải là chuỗi`);
+}
 function vec3(x: unknown, what: string): Vec3 {
   const a = arr(x, what);
   if (a.length !== 3) bad(`${what} phải là [x, y, z]`);
   return [num(a[0], what), num(a[1], what), num(a[2], what)];
 }
+const opt = <T>(o: Obj, k: string, f: (x: unknown, what: string) => T, what: string): T | undefined =>
+  o[k] === undefined ? undefined : f(o[k], `${what}.${k}`);
 
 export function parseInputs(raw: unknown): Frame[] {
   const frames = arr(obj(raw, 'inputs').frames, 'frames');
@@ -59,49 +66,66 @@ export function parseInputs(raw: unknown): Frame[] {
       fr.move = [x, z];
     }
     if (f.cam_yaw_deg !== undefined) fr.cam_yaw_deg = num(f.cam_yaw_deg, `${w}.cam_yaw_deg`);
-    for (const k of ['jump', 'interact', 'pulse', 'dash'] as const) {
+    for (const k of ['jump', 'interact', 'pulse', 'dash', 'pause'] as const) {
       if (f[k] !== undefined) fr[k] = bool(f[k], `${w}.${k}`);
     }
     return fr;
   });
 }
 
-export function parseScenario(raw: unknown): Scenario {
+export function parseScenario(raw: unknown, night = 1): Scenario {
   const s = obj(raw, 'scenario');
   const sc: Scenario = {};
   if (s.player !== undefined) {
     const p = obj(s.player, 'player');
-    sc.player = {};
-    if (p.pos !== undefined) sc.player.pos = vec3(p.pos, 'player.pos');
-    if (p.carried !== undefined) sc.player.carried = int(p.carried, 'player.carried');
-    if (p.flames !== undefined) sc.player.flames = int(p.flames, 'player.flames');
+    sc.player = {
+      pos: opt(p, 'pos', vec3, 'player'),
+      carried: opt(p, 'carried', int, 'player'),
+      flames: opt(p, 'flames', int, 'player'),
+      invuln_ticks: opt(p, 'invuln_ticks', int, 'player'),
+      dash_cd_ticks: opt(p, 'dash_cd_ticks', int, 'player'),
+      pulse_cd_ticks: opt(p, 'pulse_cd_ticks', int, 'player'),
+      charm_ticks: opt(p, 'charm_ticks', int, 'player'),
+    };
   }
-  if (s.random_motes !== undefined) sc.random_motes = bool(s.random_motes, 'random_motes');
-  if (s.random_shades !== undefined) sc.random_shades = bool(s.random_shades, 'random_shades');
+  for (const k of ['random_motes', 'random_shades', 'random_drifters', 'wind_enabled'] as const) {
+    if (s[k] !== undefined) sc[k] = bool(s[k], k);
+  }
   if (s.motes !== undefined) sc.motes = arr(s.motes, 'motes').map((m, i) => vec3(m, `motes[${i}]`));
   if (s.shades !== undefined) {
     const ids = new Set<string>();
     sc.shades = arr(s.shades, 'shades').map((x, i) => {
-      const o = obj(x, `shades[${i}]`);
-      const shade: { id?: string; pos: Vec3 } = { pos: vec3(o.pos, `shades[${i}].pos`) };
-      if (o.id !== undefined) {
-        if (typeof o.id !== 'string' || !o.id) bad(`shades[${i}].id phải là chuỗi`);
-        if (ids.has(o.id)) bad(`shades[${i}].id trùng: ${o.id}`);
-        ids.add(o.id);
-        shade.id = o.id;
-      }
-      return shade;
+      const w = `shades[${i}]`;
+      const o = obj(x, w);
+      const id = opt(o, 'id', str, w);
+      if (id !== undefined && ids.has(id)) bad(`${w}.id trùng: ${id}`);
+      if (id !== undefined) ids.add(id);
+      const state = opt(o, 'state', str, w);
+      if (state !== undefined && !SHADE_STATES.includes(state as ShadeState)) bad(`${w}.state phải là một trong ${SHADE_STATES.join(', ')}`);
+      return { id, pos: vec3(o.pos, `${w}.pos`), state: state as ShadeState | undefined, state_ticks_left: opt(o, 'state_ticks_left', int, w) };
+    });
+  }
+  if (s.drifters !== undefined) {
+    sc.drifters = arr(s.drifters, 'drifters').map((x, i) => {
+      const w = `drifters[${i}]`;
+      const o = obj(x, w);
+      return { id: opt(o, 'id', str, w), pos: vec3(o.pos, `${w}.pos`), state: opt(o, 'state', str, w), stolen: opt(o, 'stolen', int, w) };
+    });
+  }
+  if (s.charms !== undefined) {
+    sc.charms = arr(s.charms, 'charms').map((x, i) => {
+      const w = `charms[${i}]`;
+      const o = obj(x, w);
+      return { id: opt(o, 'id', str, w), pos: vec3(o.pos, `${w}.pos`), available: opt(o, 'available', bool, w) };
     });
   }
   if (s.lanterns !== undefined) {
+    const valid = lanternIds(night);
     sc.lanterns = arr(s.lanterns, 'lanterns').map((x, i) => {
-      const o = obj(x, `lanterns[${i}]`);
-      if (typeof o.id !== 'string' || !LANTERN_IDS.includes(o.id)) bad(`lanterns[${i}].id phải là một trong ${LANTERN_IDS.join(', ')}`);
-      const l: { id: string; pos?: Vec3; lit?: boolean; deposited?: number } = { id: o.id };
-      if (o.pos !== undefined) l.pos = vec3(o.pos, `lanterns[${i}].pos`);
-      if (o.lit !== undefined) l.lit = bool(o.lit, `lanterns[${i}].lit`);
-      if (o.deposited !== undefined) l.deposited = int(o.deposited, `lanterns[${i}].deposited`);
-      return l;
+      const w = `lanterns[${i}]`;
+      const o = obj(x, w);
+      if (typeof o.id !== 'string' || !valid.includes(o.id)) bad(`${w}.id phải là một trong ${valid.join(', ')}`);
+      return { id: o.id, pos: opt(o, 'pos', vec3, w), lit: opt(o, 'lit', bool, w), deposited: opt(o, 'deposited', int, w) };
     });
   }
   if (s.time_left_s !== undefined) {
