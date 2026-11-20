@@ -4,5 +4,7 @@ dist/
 *.jsonl
 !docs/proof/**/*.jsonl
 .DS_Store
-# Nhạc người chơi tự đặt (vd. Thiên Lý Ơi): có bản quyền, không commit, không nộp (RULES §8)
-public/music/
+# Nhạc người chơi tự đặt (vd. Thiên Lý Ơi): có bản quyền, không commit, không nộp (RULES §8). Ngoài public/ nên vite build không chép vào bản phát hành; chỉ vite dev phục vụ.
+music/
+# Bảng xếp hạng của người chơi trên máy (Ticket-04 §3), không commit
+leaderboard.json

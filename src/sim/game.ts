@@ -86,6 +86,7 @@ export interface World {
   drifterSeq: number;
   rng: () => number;
   prev: Record<Button, boolean>;
+  bench?: boolean; // cảnh benchmark Ticket-04 §1 (xem bench.ts); headless không bao giờ bật
 }
 
 export const idleInput = (): Input => ({ move: [0, 0], cam_yaw_deg: 0, jump: false, interact: false, pulse: false, dash: false, pause: false });
@@ -353,7 +354,7 @@ export function step(w: World, inp: Input): GameEvent[] {
   }
   // Dầu đèn: tự hao 1/s + mỗi Bóng Mực đang hút 5/s (đơn vị 1/60 nên trừ thẳng theo tick); hết dầu thì tắt ngay.
   for (const l of w.lanterns) {
-    if (!l.lit) continue;
+    if (!l.lit || w.bench) continue; // bench: tắt hao dầu
     const drainers = w.shades.filter((s) => s.state === 'drain' && s.target === l.id);
     l.fuel -= T.fuel_decay_per_s + T.drain_per_s * drainers.length;
     for (const s of drainers) {
@@ -372,7 +373,7 @@ export function step(w: World, inp: Input): GameEvent[] {
   const p = w.player;
 
   // 4. Nhặt đom đóm và bùa.
-  if (!p.falling) {
+  if (!p.falling && !w.bench) {
     const reach = (pos: Vec3) => distXZ(pos, p.pos) <= T.pickup_radius + EPS && Math.abs(p.pos[1] - pos[1]) <= R.pickup_dy + EPS;
     const inReach = w.motes.filter((m) => reach(m.pos)).sort((a, b) => distXZ(a.pos, p.pos) - distXZ(b.pos, p.pos) || byId(a.id, b.id));
     for (const m of inReach) {
@@ -466,7 +467,7 @@ export function step(w: World, inp: Input): GameEvent[] {
       const l = w.lanterns.find((x) => x.id === s.target);
       if (d <= R.drain_exit_chase + EPS) s.state = 'chase';
       else if (!l || !l.lit || l.fuel >= FUEL_LOW || distXZ(s.pos, l.pos) > R.drain_range + EPS) s.state = 'wander';
-    } else if (s.state === 'wander' && d <= R.detect) s.state = 'chase';
+    } else if (s.state === 'wander' && d <= R.detect && !w.bench) s.state = 'chase'; // bench: luôn wander
     else if (s.state === 'chase' && d > R.give_up) s.state = 'wander';
     let stepLen = 0;
     let dir = s.dir;
@@ -536,7 +537,7 @@ export function step(w: World, inp: Input): GameEvent[] {
     }
   }
   // Bóng Mực theo id tăng dần, tối đa 1 Flame mỗi tick.
-  if (!p.falling && t >= p.invulnUntil) {
+  if (!p.falling && t >= p.invulnUntil && !w.bench) {
     const hitter = [...w.shades]
       .sort((a, b) => byId(a.id, b.id))
       .find((s) => (s.state === 'chase' || s.state === 'wander') && distXZ(s.pos, p.pos) <= T.shade_hit_radius + EPS && Math.abs(s.pos[1] - p.pos[1]) <= R.hit_dy + EPS);
@@ -568,6 +569,7 @@ export function step(w: World, inp: Input): GameEvent[] {
   }
 
   // 11. Thắng / thua (Ticket-03): hết Flame luôn thua trước; chỉ xét thắng ở bình minh, không thắng sớm.
+  if (w.bench) return events; // bench: không kết thúc Đêm
   if (p.flames <= 0) {
     w.state = 'lost';
     emit('game_over', { result: 'lost', reason: 'no_flames' });

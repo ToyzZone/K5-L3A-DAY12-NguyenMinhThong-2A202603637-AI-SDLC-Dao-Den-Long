@@ -9,5 +9,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["src/sim", "src/headless.ts"]
+  "include": ["src/sim", "src/headless.ts", "src/soak.ts"]
 }

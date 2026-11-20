@@ -6,7 +6,8 @@ phase=${1:?cách dùng: scripts/proof.sh <số-phase>}
 dir=docs/proof/phase-$phase
 # Bằng chứng phải khớp mã ở tag: không cho chạy khi code/test còn thay đổi chưa commit
 # (bài học phase-2/3: src/headless.ts bị bỏ quên, tag chứa bản cũ dù test local xanh).
-dirty=$(git status --porcelain -- src tests package.json package-lock.json game.contract.json tsconfig.json index.html)
+# Chỉ các file quyết định đầu ra headless/test (src/web có thể đang được session khác sửa dở).
+dirty=$(git status --porcelain -- src/sim src/headless.ts src/soak.ts tests scripts package.json package-lock.json game.contract.json tsconfig.json)
 if [ -n "$dirty" ]; then echo "Còn thay đổi chưa commit, commit trước rồi mới sinh bằng chứng:"; echo "$dirty"; exit 1; fi
 mkdir -p "$dir"
 npm run build --silent

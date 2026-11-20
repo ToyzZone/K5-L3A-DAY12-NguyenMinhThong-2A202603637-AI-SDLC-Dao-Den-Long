@@ -3,10 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && vite build",
     "test": "tsc && node --test tests/*.test.mjs",
-    "play": "vite --open",
-    "build:web": "vite build"
+    "play": "node scripts/play.mjs",
+    "dev": "vite --open",
+    "bench": "node scripts/bench.mjs --seed 42 --duration 30 --out bench.json",
+    "soak": "node --jitless --max-semi-space-size=1 dist/soak.js --seed 7 --nights 10 --out soak.json"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
