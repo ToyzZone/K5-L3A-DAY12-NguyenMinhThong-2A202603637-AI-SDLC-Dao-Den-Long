@@ -4,6 +4,7 @@ import { createWorld, step, hasNight, distXZ, fuelOf, hasSafeZone, capacityOf, i
 import { benchWorld } from '../sim/bench.js';
 import { TUNING as T, RULES as R, TPS } from '../sim/tuning.js';
 import { sfx, setVolume, unlockAudio } from './audio.js';
+import { createSkin } from './skin.js';
 import { NAME_RE, isoNow, rank } from '../../scripts/leaderboard.mjs';
 
 const $ = (id: string) => document.getElementById(id)!;
@@ -237,6 +238,7 @@ function applyPalette() {
   $('help').textContent = `${K('up')} ${K('left')} ${K('down')} ${K('right')} di chuyển · kéo chuột hoặc ${K('camL')}/${K('camR')} xoay camera · ${K('jump')} nhảy · ${K('dash')} lướt · ${K('interact')} nạp đèn · ${K('pulse')} tỏa sáng · ${K('pause')}/Esc tạm dừng`;
 }
 applyPalette();
+const skin = BENCH || params.get('theme') === 'classic' ? null : createSkin(params.get('theme'), scene, settings); // giao diện thêm (sáng tạo), ?theme=classic để tắt
 
 // Gió Lạc: dải lụa xám xanh (một hình học chung, uốn sóng mỗi khung).
 const ribbonGeo = new THREE.PlaneGeometry(0.45, 2.4, 1, 12);
@@ -488,6 +490,7 @@ function drawHud(w: World) {
   for (const [key, c] of timedCues) if (c.until < nowS) timedCues.delete(key); else lines.push([c.text, c.cls]);
   const html = lines.map(([t, c]) => `<div class="${c}">${t}</div>`).join('');
   if (html !== cuesHtml) cuesEl.innerHTML = cuesHtml = html;
+  skin?.hud();
 }
 
 // --- Vẽ thế giới ---
@@ -597,6 +600,7 @@ function draw(now: number, dt: number) {
   }
   playerLight.intensity = 15 + 120 * Math.max(0, 1 - pa);
   flash.style.opacity = settings.rm ? '0' : String(Math.max(0, 1 - (now - hitAt) / 0.6)); // giảm chuyển động: không chớp màn hình
+  skin?.draw(w, now, { player, lanterns: lv.lanterns, motes, shades });
 }
 
 // --- FPS (?fps): trung bình 5 giây ---

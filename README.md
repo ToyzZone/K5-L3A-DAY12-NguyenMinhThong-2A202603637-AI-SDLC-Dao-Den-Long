@@ -119,7 +119,24 @@ Số đo trên máy tác giả (bản commit: [`bench.json`](bench.json), [`soak
 
 ## Sáng tạo của tôi
 
-Chưa có trong v1.0.0. Các theme đồ họa đang làm ở phiên khác, chưa được đưa vào bản phát hành.
+Hai bộ giao diện thêm, chỉ ở phần vẽ ([src/web/skin.ts](src/web/skin.ts), [src/web/themes.ts](src/web/themes.ts)). Sim, Test Contract, bản đồ và đầu ra headless không đổi; `?bench` tắt hẳn theme nên cảnh bench giữ nguyên.
+
+| Theme | Mặc định khi | Đổi gì |
+|---|---|---|
+| **Sơn Mài** | bản build (`npm run play`) | Mây, Đèn Lồng (đèn lụa bầu dục), Đom đóm và Bóng Mực theo chất liệu tranh sơn mài: mặt bóng, viền thếp vàng |
+| **Chạy Show** | `npm run dev` | Mây thành ca sĩ cầm micro (vẫn đội nón lá treo đèn nhỏ), Đom đóm thành fan giơ tim, Đèn Lồng thành sân khấu (khán giả xếp theo tiến độ nạp, đèn rọi khi thắp), Bóng Mực thành antifan có bong bóng chê bai; HUD đổi nhãn thành Show / Cát-xê / Antifan |
+
+- **Đổi theme:** thêm `?theme=sonmai`, `?theme=chayshow` hoặc `?theme=classic` (hình gốc) vào URL.
+- **Giữ yêu cầu:**
+  - màu các thành phần lấy từ Bảng màu chuẩn Ticket-02 §8;
+  - bật "Bảng màu dễ phân biệt" thì theme nhường cho hình gốc (Ticket-03 §6);
+  - "Giảm chuyển động" làm phần trang trí đứng yên;
+  - theme dùng lại nguồn sáng của game, không thêm đèn.
+- **Ba phương án thiết kế** (thêm Giấy Dó, cắt giấy): mở `/preview.html` khi chạy `npm run dev`.
+- **Bằng chứng:** hai ảnh dưới chụp game ở Đêm 1, 1280×720, bằng Chrome headless. Tình huống được đặt sẵn bằng công cụ thử: đã thắp 1 đèn, 2 Bóng Mực, 1 con đang Choáng.
+
+![Theme Sơn Mài: đèn lụa đã thắp, Bóng Mực](docs/img/theme-sonmai.png)
+![Theme Chạy Show: sân khấu đã thắp, antifan có bong bóng](docs/img/theme-chayshow.png)
 
 ## Tài liệu và harness AI
 

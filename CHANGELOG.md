@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.1.0: giao diện thêm (sáng tạo)
+
+Chỉ phần vẽ (`src/web/`). Sim, Test Contract, bản đồ và đầu ra headless không đổi; `?bench` tắt hẳn theme nên cảnh bench giữ nguyên.
+- **Theme Sơn Mài** (mặc định bản build) và **Chạy Show** (mặc định `npm run dev`); `?theme=classic` dùng hình gốc. Trang `preview.html` so ba phương án thiết kế.
+- **Hỗ trợ tiếp cận giữ nguyên:** bật Bảng màu dễ phân biệt thì theme nhường cho hình gốc; Giảm chuyển động làm phần trang trí đứng yên và không chớp sáng khi thắp đèn.
+- **Nhạc nền / câu thoại riêng:** chỉ đọc từ `music/` (gitignore) khi chạy dev; repo và bản build không chứa.
+
 ## phase-4 / v1.0.0: contract v1.3 (Ticket-04 "Bình minh v1.0.0")
 
 Không có luật [THAY THẾ]. Đầu ra headless của Đêm 1–3 giữ nguyên từng byte (so 18 lần chạy trước và sau).
