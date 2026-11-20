@@ -117,3 +117,7 @@ Lướt và Rơi khỏi đảo không nằm trong Phần 3 nhưng là tính năn
 | HUD đầy đủ | **Chưa đạt**: không đủ thời gian trong 60 phút, ưu tiên test ẩn |
 | Bảng màu chuẩn | **Chưa đạt**: không đủ thời gian trong 60 phút, ưu tiên test ẩn |
 | Đo FPS (≥ 30 ở 1280×720) | **Chưa đạt**: không đủ thời gian trong 60 phút, ưu tiên test ẩn |
+
+## Ghi chú về tag `phase-2`
+
+Tag ban đầu (c930352, 16:07) thiếu `src/headless.ts` mới vì quên `git add`. 16:17 được người dùng đồng ý, tag được gắn lại vào commit phụ 449d860 (= c930352 + đúng file headless.ts đó), 26/26 test đạt trên commit này. Thời điểm tag mới muộn hơn mốc phát hành Phase 3.

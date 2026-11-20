@@ -30,6 +30,7 @@ Công cụ chính: Claude Code (VS Code extension), model Claude Opus 5.5 / Fabl
 | Agent đề xuất "bypass" trợ giảng bằng cách đọc kho tri thức của trang | Người dùng hỏi; agent tự kiểm mã nguồn trang | Từ chối lấy nguyên kho và phase chưa mở (RULES mục 11); chỉ hỏi trợ giảng như học viên |
 | Đọc lab board bằng công cụ Artifact chỉ ra HTML tĩnh, không có phase mới | Agent đọc trả về "Chưa phát hành" | Đọc qua Safari đã đăng nhập |
 | Rủi ro test "luôn đạt" | Tự kiểm: cài 4 lỗi vào lõi (bất tử lệch 1 tick, biên Vùng an toàn, vùng cho đèn chưa Thắp, làm tròn số rơi) | Cả 4 bị test bắt; giữ quy tắc "test trên JSONL của dist/headless.js" trong CLAUDE.md |
+| Agent sửa `src/headless.ts` cho v1.1 nhưng không `git add` file đó; tag `phase-2` và `phase-3` chứa bản headless cũ (không có `night_start`, chặn `--night 2`, dừng vòng lặp khi tạm dừng) dù test và CI local đều xanh trên thư mục làm việc | 16:14 `git status` thấy `M src/headless.ts` sau khi gắn tag phase-3; xác nhận bằng `git show phase-3:src/headless.ts` | Commit bản sửa, clone sạch chạy `build_cmd` + test (37/37), được người dùng đồng ý thì gắn lại `phase-3` (5f115da) và `phase-2` (commit phụ 449d860 = c930352 + headless.ts, 26/26 test). Harness: `proof.sh` từ chối chạy khi còn thay đổi chưa commit; CLAUDE.md bắt clone sạch trước khi gắn tag |
 
 ## Token và chi phí
 
