@@ -22,6 +22,7 @@ Công cụ chính: Claude Code (VS Code extension), model Claude Opus 5.5 / Fabl
 - Giao subagent: giao diện Three.js (brief có điều khiển, HUD, phong cách PRD), đọc tab Phase 2 qua Safari, review độc lập.
 - "đồ hoạ xấu quá, dùng agent fable /design … 1 option theo phong cách một ca sĩ và bài hát nổi tiếng" (tên không ghi vào repo) → agent tạo 3 theme + `preview.html` (chỉ file mới, không đụng `main.ts` của phiên Phase 2). Option đó chỉ dùng mô-típ tự làm (đom đóm, giàn thiên lý), không ảnh/tên trong game. Nhạc nền: người dùng chọn dùng (dự án học tập, không phát hành); file do người dùng tự đặt ở `music/nhac-nen.mp3` (ngoài `public/` nên `vite build` không chép vào bản phát hành, chỉ phát khi chạy dev), đã gitignore nên không vào repo/bài nộp; thiếu file thì game im lặng.
 - "chốt ý tưởng chạy show … kẹp thêm 1 bản mượt (sơn mài)", "1 có, 2 bỏ" → `src/web/skin.ts` phủ theme lên vật thể của main.ts (dev: Chạy Show, build: Sơn Mài, `?theme=classic` tắt, `?bench` tắt hẳn). Bỏ tên ca sĩ/bài hát khỏi file commit; nhạc và câu meme nằm ở `music/` (gitignore), chỉ đọc khi chạy dev. Lỗi AI tự bắt khi kiểm tra bằng Chrome headless: sân khấu/antifan tạo lại mỗi khung (quên lưu cache), số PointLight gấp đôi làm vỡ shader, theme che mất dấu hiệu chế độ mù màu, đèn bị ACES làm nhạt màu.
+- Sau lab: "check xem lab này tôi xong chưa, dùng browser driver để test game và quay video" → agent clone sạch từng tag, chạy lại build, test và bằng chứng; viết driver Playwright + Edge (ngoài repo) kiểm 57 mục giao diện trên `phase-4` và 63 mục trên `main`, cho bot chơi trọn Đêm 1; dựng `demo.mp4` từ chính các lần chạy đó. "video ko có tiếng à, import nhạc … vào cả video" → ghép `music/nhac-nen.mp3` lặp suốt video. Người dùng chọn giữ nhạc và ghi rõ nguồn trong CREDITS, đổi lại quyết định "không ghi tên" ở trên. Từ đây bản nhạc có trong bài nộp, nhưng chỉ trong video; file nhạc vẫn nằm ngoài repo và bản build.
 
 ## Lỗi của AI và cách xử lý
 
@@ -50,6 +51,7 @@ Lấy từ trường `usage` trong transcript của Claude Code, chia theo giờ
 | 4 | chính + subagent | 106 + 17 | 175 + 38 | 11 086 + 2 500 | Tự làm UI thay vì giao subagent (đã có `main.ts` trong ngữ cảnh) |
 | **Tổng phiên làm bài** | | **≈ 553** | **≈ 1 780** | **≈ 53 060** | |
 | Phiên theme (sáng tạo, chưa vào v1.0.0) | lab-12-ac | 326 | 1 387 | 35 404 | Chạy song song, không chặn phiên chính |
+| Kiểm tra sau lab và video demo | phiên riêng (Fable 5.2) | 383 | 757 | 41 587 | Thử bot trên lõi mô phỏng trước khi chạy trong trình duyệt; dựng video từ các đoạn đã quay, không quay lại cả buổi |
 
 Không quy ra tiền vì chưa có bảng giá chắc chắn cho model đang dùng. Cách đã tiết kiệm:
 - giao subagent các việc đọc nhiều (lab board, review) và chỉ nhận báo cáo ngắn;

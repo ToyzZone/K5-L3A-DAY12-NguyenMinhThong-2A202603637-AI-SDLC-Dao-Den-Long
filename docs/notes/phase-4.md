@@ -54,7 +54,7 @@ Nguồn: [docs/lab/phase-4-ticket.md](../lab/phase-4-ticket.md). Ticket không c
 | §4 Chữ ≥ 18 px ở 1280×720, chữ lớn ×1.25 | Đạt: chữ nhỏ nhất đo được là 18 px ở menu, Cài đặt và HUD; 22.5 px khi bật chữ lớn | Đo `getComputedStyle` trên mọi phần tử có chữ |
 | §5 Clone sạch → ≤ 3 lệnh → chơi được; README đủ mục; CHANGELOG 4 phase; CREDITS; LICENSE | Đạt | README; kiểm tra clone sạch trước khi gắn tag |
 | §6 Contract v1.3 (`bench_cmd`, `soak_cmd`), yêu cầu v1.0–v1.2 giữ nguyên | Đạt | `contract.test.mjs`; 41 test cũ vẫn đạt; headless Đêm 1–3 giống từng byte |
-| §7 Retro, video | Retro: [retro.md](retro.md). Video: người dùng quay và đính kèm Release | |
+| §7 Retro, video | Retro: [retro.md](retro.md). Video: `demo.mp4` ở Release v1.0.0, đính kèm lúc 01:27 ngày 2026-11-21 (giờ Việt Nam). Quay tự động bằng browser driver trên bản clone sạch của tag `phase-4`, không quay tay. Nhạc nền ghép thêm sau là bài hát có bản quyền, dùng không có giấy phép (chưa đạt RULES §8) | Cách quay và nguồn: [CREDITS.md](../../CREDITS.md) |
 
 Lần bench đầu tiên trong buổi chỉ được `p1_low_fps` 20.7 (`avg_fps` 189). Lúc đó trang xem trước theme của phiên khác đang vẽ WebGL liên tục trong Safari Technology Preview, và load average của máy là 16. Các cú giật 50–200 ms dồn từ giây 17 trở đi, khớp với tải từ bên ngoài. Sau khi tạm dừng trang đó, đo lại được 77.5. `bench.json` trong repo là lần đo này.
 
