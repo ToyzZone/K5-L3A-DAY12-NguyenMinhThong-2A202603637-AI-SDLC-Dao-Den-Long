@@ -1,7 +1,7 @@
 // Chế độ headless theo Test Contract v1.0.
 // node dist/headless.js --seed <int> --night 1 [--scenario f] [--inputs f] --ticks <int> --out f.jsonl [--snapshot-every 10]
 import { readFileSync, writeFileSync } from 'node:fs';
-import { createWorld, idleInput, snapshot, step } from './sim/game.js';
+import { createWorld, hasNight, idleInput, snapshot, step } from './sim/game.js';
 import { parseInputs, parseScenario } from './sim/formats.js';
 
 function fail(code: number, msg: string): never {
@@ -45,16 +45,18 @@ const seed = intArg('seed');
 const ticks = intArg('ticks');
 const every = intArg('snapshot-every', 10);
 const out = args.get('out') ?? fail(1, 'thiếu --out');
-if (intArg('night', 1) !== 1) fail(1, 'chỉ có --night 1');
+const night = intArg('night', 1);
+if (![1, 2, 3].includes(night)) fail(1, '--night phải là 1, 2 hoặc 3');
+if (!hasNight(night)) fail(1, `Đêm ${night} chưa được làm (xem docs/notes)`);
 if (ticks < 0 || every < 1) fail(1, '--ticks phải ≥ 0 và --snapshot-every phải ≥ 1');
 const frames = load('inputs', parseInputs) ?? [];
-const scenario = load('scenario', parseScenario) ?? {};
+const scenario = load('scenario', (raw) => parseScenario(raw, night)) ?? {};
 
-const w = createWorld(seed, scenario);
-const lines = [JSON.stringify(snapshot(w))];
+const w = createWorld(seed, scenario, night);
+const lines = [JSON.stringify(snapshot(w)), JSON.stringify({ type: 'event', tick: 0, name: 'night_start', data: { night } })];
 const input = idleInput();
 let fi = 0;
-for (let k = 0; k < ticks && w.state === 'playing'; k++) {
+for (let k = 0; k < ticks && (w.state === 'playing' || w.state === 'paused'); k++) {
   for (; fi < frames.length && frames[fi].tick <= k; fi++) {
     const { tick: _, ...changes } = frames[fi];
     Object.assign(input, changes);
