@@ -695,10 +695,10 @@ function fireflyPoints(n: number, blink: number, coreOn = 1) {
   return pts;
 }
 
-/** Đom đóm nhặt được (theme Chạy Show: fan phát sáng cầm tim). Mỗi khung gọi set(danh sách pos [x, y, z] của sim); bay ở 0.6 m. */
+/** Đom đóm nhặt được (theme Chạy Show: fan phát sáng cầm tim). Mỗi khung gọi set(danh sách pos [x, y, z] của sim); bay cao hơn mặt đất nơi đặt 0.6 m (Đêm 3 có tầng). */
 export function makeFireflies(t: Theme, max = 64) {
   const k = 1 + t.moteCompanions, n = max * k, points = fireflyPoints(n, 0, t.show ? 0 : 1), geo = points.geometry;
-  const xz = new Float32Array(max * 2), fans: THREE.InstancedMesh[] = [];
+  const xz = new Float32Array(max * 2), ys = new Float32Array(max), fans: THREE.InstancedMesh[] = [];
   if (t.show) { // thân + đầu màu lõi đom đóm (quầng vẫn do Points vẽ), tim hồng giơ trên đầu
     const body = mergeGeometries([new THREE.CapsuleGeometry(0.08, 0.14, 4, 8), new THREE.SphereGeometry(0.08, 10, 8).translate(0, 0.2, 0)]);
     const heart = new THREE.ShapeGeometry(heartShape(), 6).translate(0, -0.5, 0).rotateZ(Math.PI).scale(0.22, 0.22, 0.22);
@@ -719,7 +719,8 @@ export function makeFireflies(t: Theme, max = 64) {
     set(list: ArrayLike<ArrayLike<number>>) {
       const m = Math.min(list.length, max);
       for (let i = 0; i < m; i++) {
-        for (let c = 0; c < k; c++) pos.setXYZ(i * k + c, list[i][0], 0.6, list[i][2]);
+        for (let c = 0; c < k; c++) pos.setXYZ(i * k + c, list[i][0], list[i][1] + 0.6, list[i][2]);
+        ys[i] = list[i][1];
         xz[i * 2] = list[i][0];
         xz[i * 2 + 1] = list[i][2];
       }
@@ -731,7 +732,7 @@ export function makeFireflies(t: Theme, max = 64) {
       (points.material as THREE.ShaderMaterial).uniforms.uTime.value = now;
       if (!fans.length) return;
       for (let i = 0; i < fans[0].count; i++) { // nhún cùng nhịp với quầng trong shader
-        const y = 0.6 + 0.12 * Math.sin(now * 2.4 + ((i * k * 0.618) % 1) * 61);
+        const y = ys[i] + 0.6 + 0.12 * Math.sin(now * 2.4 + ((i * k * 0.618) % 1) * 61);
         fans[0].setMatrixAt(i, _m.makeTranslation(xz[i * 2], y - 0.08, xz[i * 2 + 1]));
         fans[1].setMatrixAt(i, _m.makeRotationY(now * 1.6 + i).setPosition(xz[i * 2], y + 0.36, xz[i * 2 + 1]));
       }
@@ -1013,18 +1014,19 @@ export function makeLantern(t: Theme, safeRadius = 6) {
     /** 0..1. Dưới 0.3 (low_fuel 30/100): đèn và thanh dầu nhấp nháy 1 Hz, mất Vùng an toàn. Hạt quanh đèn = dầu khi sáng, = tiến độ Nạp khi tắt. */
     setFuel(f: number) { fuel = Math.max(0, Math.min(1, f)); },
     burst(now: number) { litAt = now; },
-    update(now: number) {
+    /** deco: thời gian cho phần trang trí (đung đưa, đèn rọi quét, chập chờn); giảm chuyển động thì truyền hằng số. Nhấp nháy hết dầu vẫn theo now. */
+    update(now: number, deco = now) {
       const e = Math.max(0, 1 - (now - litAt) / 1.2), low = lit && fuel < 0.3;
       const blink = low ? 0.55 + 0.45 * Math.cos(now * TAU) : 1;
-      headMat.emissiveIntensity = lit ? (0.35 + 0.65 * fuel) * blink * (1 + 0.03 * Math.sin(now * 9)) : 0.4 * prog;
+      headMat.emissiveIntensity = lit ? (0.35 + 0.65 * fuel) * blink * (1 + 0.03 * Math.sin(deco * 9)) : 0.4 * prog;
       light.intensity = (lit ? 40 * (0.25 + 0.75 * fuel) * blink : 0) + 320 * e;
       head.scale.setScalar(1 + 0.25 * e * Math.sin(e * 9));
-      hang.rotation.set(0.03 * Math.sin(now * 1.1), t.lantern === 'star' ? now * 0.5 : 0, 0.04 * Math.sin(now * 1.3));
+      hang.rotation.set(0.03 * Math.sin(deco * 1.1), t.lantern === 'star' ? deco * 0.5 : 0, 0.04 * Math.sin(deco * 1.3));
       safe.visible = lit && !low;
       safe.scale.setScalar(0.05 + 0.95 * (1 - (1 - Math.min(1, Math.max(0, now - litAt) / 0.6)) ** 3));
-      safeMat.uniforms.uTime.value = now;
+      safeMat.uniforms.uTime.value = deco;
       beamMat.opacity = lit ? 0.16 * blink : 0;
-      beams.forEach((b, i) => b.lookAt(group.localToWorld(_p.set((i ? -0.3 : 0.3) + Math.sin(now * 0.8 + i * 2) * 0.9, 0.45, 0.4 + Math.cos(now * 0.6 + i) * 0.5))));
+      beams.forEach((b, i) => b.lookAt(group.localToWorld(_p.set((i ? -0.3 : 0.3) + Math.sin(deco * 0.8 + i * 2) * 0.9, 0.45, 0.4 + Math.cos(deco * 0.6 + i) * 0.5))));
       const filled = Math.round(10 * (lit ? fuel : prog));
       for (let i = 0; i < 10; i++) pips.setColorAt(i, i < filled ? _c.setHex(lit ? PALETTE.lanternCore : PALETTE.moteCore).multiplyScalar(blink) : _c.setHex(0x262a36));
       pips.instanceColor!.needsUpdate = true;

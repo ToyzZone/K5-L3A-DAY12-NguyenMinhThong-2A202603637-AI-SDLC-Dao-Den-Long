@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.2.0: theme đầy đủ trong game
+
+Chỉ phần vẽ (`src/web/`, `index.html`). Sim, Test Contract, bản đồ và đầu ra headless không đổi; `?bench` không chạy dòng theme nào.
+- **Cài đặt → Giao diện:** Sơn Mài, Giấy Dó, Đom Đóm · Chạy Show, Cổ điển; lưu trong cài đặt, `?theme=` vẫn ghi đè.
+- **Môi trường theo theme cho từng Đêm:** trời, trăng, sao, đảo, cầu tre (Đêm 2), biển mây, cây cỏ (rừng tre, cây cắt giấy, giàn thiên lý), bầy đom đóm trang trí. Đêm 3 giữ tầng, dốc, tháp của hình gốc; cây cỏ tránh đèn, điểm sinh, bục nhảy, bùa và chỗ đất nhô cao.
+- **Font theo theme** (chỉ đổi họ chữ, giữ cỡ ≥ 18 px và ×1.25 khi chữ lớn).
+- **Cây cỏ chắn camera được khoét** để luôn thấy Mây; Bóng Mực/antifan được dựng sẵn lúc vào game để con đầu tiên xuất hiện không bị giật.
+
 ## v1.1.0: giao diện thêm (sáng tạo)
 
 Chỉ phần vẽ (`src/web/`). Sim, Test Contract, bản đồ và đầu ra headless không đổi; `?bench` tắt hẳn theme nên cảnh bench giữ nguyên.

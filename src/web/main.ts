@@ -21,6 +21,7 @@ const DANG: Record<number, string> = {
 };
 // ponytail: hình đảo vẽ tay theo maps.ts (ground() không liệt kê đảo); đổi bản đồ thì sửa cả ở đây.
 const ISLANDS: Record<number, [number, number][]> = { 1: [[0, 40]], 2: [[0, 28], [70, 28]], 3: [[0, 45]] };
+const BRIDGES: Record<number, { x0: number; x1: number; z0: number; z1: number }[]> = { 2: [{ x0: 26, x1: 44, z0: -2, z1: 2 }] };
 
 // --- Cài đặt (lưu localStorage) ---
 // Đổi phím (Ticket-04 §4): mỗi hành động một phím theo e.code; Esc luôn tạm dừng và hủy đổi phím.
@@ -31,7 +32,7 @@ const ACTION_NAME: Record<Action, string> = { up: 'Đi lên', down: 'Đi xuống
 const KEY_LABEL: Record<string, string> = { ShiftLeft: 'Shift trái', ShiftRight: 'Shift phải', ControlLeft: 'Ctrl trái', ControlRight: 'Ctrl phải', AltLeft: 'Alt trái', AltRight: 'Alt phải', ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓' };
 const keyName = (c: string) => KEY_LABEL[c] ?? c.replace(/^(Key|Digit)/, '');
 // cb: Bảng màu dễ phân biệt (Ticket-03 §6); rm: giảm chuyển động; big: chữ lớn ×1.25.
-const settings = { vol: 0.6, sens: 0.3, cb: false, rm: matchMedia('(prefers-reduced-motion: reduce)').matches, big: false, keys: { ...DEFAULT_KEYS } };
+const settings = { vol: 0.6, sens: 0.3, cb: false, rm: matchMedia('(prefers-reduced-motion: reduce)').matches, big: false, theme: '', keys: { ...DEFAULT_KEYS } };
 try {
   const saved = JSON.parse(localStorage.getItem('ddl-settings') ?? '{}');
   Object.assign(settings, saved, { keys: { ...DEFAULT_KEYS, ...saved.keys } });
@@ -66,11 +67,13 @@ const resize = () => {
 addEventListener('resize', resize);
 resize();
 
+const backdrop: THREE.Object3D[] = []; // biển, mây, sao, 3 đèn của cảnh cổ điển: theme ẩn đi
 const ambient = new THREE.AmbientLight(0xfff0dd, 0.15); // = 0.15 + 0.55 × đèn sáng / tổng (Ticket-02 mục 8)
 const sky = new THREE.HemisphereLight(0x8a90d0, 0x2a2010, 1);
 const moon = new THREE.DirectionalLight(0x9fb0ff, 1.2);
 moon.position.set(-20, 30, -10);
 scene.add(ambient, sky, moon);
+backdrop.push(ambient, sky, moon);
 
 const std = (color: number, emissive = 0, ei = 1, extra: THREE.MeshStandardMaterialParameters = {}) =>
   new THREE.MeshStandardMaterial({ color, emissive, emissiveIntensity: ei, roughness: 0.85, ...extra });
@@ -85,20 +88,24 @@ function add<M extends THREE.Material | THREE.Material[]>(g: THREE.BufferGeometr
 const ring = (r0: number, r1: number) => new THREE.RingGeometry(r0, r1, 64).rotateX(-Math.PI / 2);
 
 // Biển mây + sao.
-add(new THREE.PlaneGeometry(800, 800).rotateX(-Math.PI / 2), std(C.sea), scene, 35, -16, 0);
+backdrop.push(add(new THREE.PlaneGeometry(800, 800).rotateX(-Math.PI / 2), std(C.sea), scene, 35, -16, 0));
 const cloudGeo = new THREE.SphereGeometry(1, 12, 8), cloudMat = std(C.sea, C.sea, 0.5);
 for (let i = 0; i < 90; i++) {
   const a = Math.random() * Math.PI * 2, r = 50 + Math.random() * 110, s = 4 + Math.random() * 8;
-  add(cloudGeo, cloudMat, scene, 35 + Math.cos(a) * r, -14 + Math.random() * 3, Math.sin(a) * r).scale.set(s * 1.6, s * 0.4, s);
+  const cl = add(cloudGeo, cloudMat, scene, 35 + Math.cos(a) * r, -14 + Math.random() * 3, Math.sin(a) * r);
+  cl.scale.set(s * 1.6, s * 0.4, s);
+  backdrop.push(cl);
 }
 const starPos = Array.from({ length: 700 * 3 }, (_, i) => {
   const k = Math.floor(i / 3), a = k * 2.399, y = 0.15 + 0.85 * ((k * 0.618) % 1);
   return [Math.cos(a) * Math.sqrt(1 - y * y), y, Math.sin(a) * Math.sqrt(1 - y * y)][i % 3] * 300;
 });
-scene.add(new THREE.Points(
+const stars = new THREE.Points(
   new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3)),
   new THREE.PointsMaterial({ color: 0xfff0d0, size: 2, sizeAttenuation: false, fog: false }),
-));
+);
+scene.add(stars);
+backdrop.push(stars);
 
 // --- Mây: áo, khăn đỏ, nón lá, đèn nhỏ treo vành nón ---
 const player = new THREE.Group();
@@ -117,7 +124,7 @@ player.add(playerLight);
 const postGeo = new THREE.CylinderGeometry(0.1, 0.14, 2.4, 8), headGeo = new THREE.SphereGeometry(0.38, 16, 12);
 const tearGeo = new THREE.BoxGeometry(0.07, 0.4, 0.04), tearMat = new THREE.MeshBasicMaterial({ color: 0x0b0710 }), BAR_W = 1.4;
 const coreGeo = new THREE.SphereGeometry(0.2, 10, 8), pipGeo = new THREE.SphereGeometry(0.07, 8, 6), safeGeo = ring(T.safe_radius - 0.12, T.safe_radius);
-interface Level { g: THREE.Group; lanterns: ReturnType<typeof makeLantern>[]; charms: THREE.Object3D[]; pads: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>[] }
+interface Level { g: THREE.Group; terrain: THREE.Object3D[]; lanterns: ReturnType<typeof makeLantern>[]; charms: THREE.Object3D[]; pads: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>[] }
 function makeLantern(parent: THREE.Object3D) {
   const g = new THREE.Group();
   parent.add(g);
@@ -167,14 +174,15 @@ function level(w: World): Level {
   if (cached) return cached;
   const g = new THREE.Group();
   scene.add(g);
+  const terrain: THREE.Object3D[] = [];
   for (const [cx, r] of ISLANDS[w.night] ?? ISLANDS[1]) {
-    add(new THREE.CylinderGeometry(r, r * 0.88, 3, 64), std(C.sand), g, cx, -1.5, 0);
-    add(new THREE.ConeGeometry(r * 0.88, r * 0.5, 24).rotateX(Math.PI), std(0x2a2638), g, cx, -3 - r * 0.25, 0);
-    add(new THREE.CircleGeometry(r - 1.6, 64).rotateX(-Math.PI / 2), std(C.grass), g, cx, 0.02, 0);
+    terrain.push(add(new THREE.CylinderGeometry(r, r * 0.88, 3, 64), std(C.sand), g, cx, -1.5, 0));
+    terrain.push(add(new THREE.ConeGeometry(r * 0.88, r * 0.5, 24).rotateX(Math.PI), std(0x2a2638), g, cx, -3 - r * 0.25, 0));
+    terrain.push(add(new THREE.CircleGeometry(r - 1.6, 64).rotateX(-Math.PI / 2), std(C.grass), g, cx, 0.02, 0));
   }
   if (w.night === 2) { // cầu gỗ x ∈ [26, 44], |z| ≤ 2
-    add(new THREE.BoxGeometry(18, 0.3, 4), std(C.wood), g, 35, -0.15, 0);
-    for (const x of [26.5, 31, 35.5, 40, 43.5]) for (const z of [-1.9, 1.9]) add(new THREE.CylinderGeometry(0.08, 0.08, 1), std(C.wood), g, x, 0.5, z);
+    terrain.push(add(new THREE.BoxGeometry(18, 0.3, 4), std(C.wood), g, 35, -0.15, 0));
+    for (const x of [26.5, 31, 35.5, 40, 43.5]) for (const z of [-1.9, 1.9]) terrain.push(add(new THREE.CylinderGeometry(0.08, 0.08, 1), std(C.wood), g, x, 0.5, z));
   }
   if (w.night === 3) buildNight3(g);
   const pads = w.map.pads.map((p) => add(new THREE.CylinderGeometry(1, 1.1, 0.16, 24), std(0x8a8170, C.gold, 1), g, p.pos[0], p.pos[1] + 0.08, p.pos[2]));
@@ -186,7 +194,7 @@ function level(w: World): Level {
     g.add(o);
     return o;
   });
-  const l: Level = { g, lanterns: w.lanterns.map(() => makeLantern(g)), charms, pads };
+  const l: Level = { g, terrain, lanterns: w.lanterns.map(() => makeLantern(g)), charms, pads };
   levels.set(w.night, l);
   return l;
 }
@@ -238,7 +246,11 @@ function applyPalette() {
   $('help').textContent = `${K('up')} ${K('left')} ${K('down')} ${K('right')} di chuyển · kéo chuột hoặc ${K('camL')}/${K('camR')} xoay camera · ${K('jump')} nhảy · ${K('dash')} lướt · ${K('interact')} nạp đèn · ${K('pulse')} tỏa sáng · ${K('pause')}/Esc tạm dừng`;
 }
 applyPalette();
-const skin = BENCH || params.get('theme') === 'classic' ? null : createSkin(params.get('theme'), scene, settings); // giao diện thêm (sáng tạo), ?theme=classic để tắt
+// Giao diện thêm (sáng tạo): ?theme= thắng lựa chọn trong Cài đặt; 'classic' hoặc ?bench thì không chạy dòng theme nào.
+const themeWant = params.get('theme') ?? (settings.theme || null);
+const skin = BENCH || themeWant === 'classic' ? null : createSkin(themeWant, scene, renderer, settings, backdrop);
+if (skin) { camera.far = 600; camera.updateProjectionMatrix(); } // vòm trời theme r 420 quanh gốc; Đêm 2 camera đi tới x ≈ 100
+const THEME_NAMES: Record<string, string> = { sonmai: 'Sơn Mài', giaydo: 'Giấy Dó', chayshow: 'Đom Đóm · Chạy Show', classic: 'Cổ điển' };
 
 // Gió Lạc: dải lụa xám xanh (một hình học chung, uốn sóng mỗi khung).
 const ribbonGeo = new THREE.PlaneGeometry(0.45, 2.4, 1, 12);
@@ -326,6 +338,7 @@ function panelHtml(): string {
     return `<h1>Cài đặt</h1><label>Âm lượng <input type="range" id="vol" min="0" max="1" step="0.05" value="${settings.vol}"></label>` +
       `<label>Độ nhạy chuột <input type="range" id="sens" min="0.05" max="1" step="0.05" value="${settings.sens}"></label>` +
       chk('cb', settings.cb, 'Bảng màu dễ phân biệt') + chk('rm', settings.rm, 'Giảm chuyển động (tắt chớp màn hình, nhấp nháy)') + chk('big', settings.big, 'Chữ lớn (×1.25)') +
+      `<label>Giao diện <select id="theme">${Object.entries(THEME_NAMES).map(([k, v]) => `<option value="${k}"${k === (skin?.key ?? 'classic') ? ' selected' : ''}>${v}</option>`).join('')}</select></label>` +
       `<h2>Phím</h2><div class="keys">${ACTIONS.map((a) => `<span>${ACTION_NAME[a]}</span><button data-key="${a}"${dupSet.has(a) ? ' class="dup"' : ''}>${rebinding === a ? 'Nhấn phím…' : keyName(settings.keys[a])}</button>`).join('')}</div>` +
       `<p class="err" role="alert">${dups.map((as) => `Trùng phím ${keyName(settings.keys[as[0]])}: ${as.map((a) => ACTION_NAME[a]).join(', ')}`).join('<br>')}</p>` +
       `<p><small>Bấm một ô rồi nhấn phím mới. Esc: hủy (Esc luôn tạm dừng game).</small></p>` +
@@ -381,6 +394,14 @@ panel.addEventListener('input', (e) => {
   if (el.id === 'sens') settings.sens = +el.value;
   if (el.id === 'cb' || el.id === 'rm' || el.id === 'big') { settings[el.id] = el.checked; applyPalette(); }
   if (el.id === 'lbname') return; // ô tên không phải cài đặt
+  if (el.id === 'theme') { // dựng lại cảnh bằng cách tải lại trang; bỏ ?theme= để lựa chọn có hiệu lực
+    settings.theme = el.value;
+    saveSettings();
+    const u = new URL(location.href);
+    u.searchParams.delete('theme');
+    location.replace(u.href);
+    return;
+  }
   saveSettings();
 });
 
@@ -397,6 +418,7 @@ addEventListener('keydown', (e) => {
     return;
   }
   if ((e.target as HTMLElement).id === 'lbname') { if (e.code === 'Enter') submitName(); return; } // đang gõ tên
+  if ((e.target as HTMLElement).tagName === 'SELECT') return; // ô Giao diện: mũi tên/Space dùng để chọn, không điều khiển Mây
   unlockAudio();
   if (e.code === 'Space' || e.code.startsWith('Arrow') || Object.values(settings.keys).includes(e.code)) e.preventDefault();
   keys.add(e.code); // e.code, không phải e.key: bộ gõ Telex/VNI không làm lệch phím
@@ -600,7 +622,7 @@ function draw(now: number, dt: number) {
   }
   playerLight.intensity = 15 + 120 * Math.max(0, 1 - pa);
   flash.style.opacity = settings.rm ? '0' : String(Math.max(0, 1 - (now - hitAt) / 0.6)); // giảm chuyển động: không chớp màn hình
-  skin?.draw(w, now, { player, lanterns: lv.lanterns, motes, shades });
+  skin?.draw(w, now, { player, lanterns: lv.lanterns, motes, shades, terrain: lv.terrain, islands: ISLANDS[w.night] ?? ISLANDS[1], bridges: BRIDGES[w.night] ?? [] });
 }
 
 // --- FPS (?fps): trung bình 5 giây ---

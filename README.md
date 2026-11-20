@@ -119,24 +119,38 @@ Số đo trên máy tác giả (bản commit: [`bench.json`](bench.json), [`soak
 
 ## Sáng tạo của tôi
 
-Hai bộ giao diện thêm, chỉ ở phần vẽ ([src/web/skin.ts](src/web/skin.ts), [src/web/themes.ts](src/web/themes.ts)). Sim, Test Contract, bản đồ và đầu ra headless không đổi; `?bench` tắt hẳn theme nên cảnh bench giữ nguyên.
+Ba bộ giao diện thêm, chỉ ở phần vẽ ([src/web/skin.ts](src/web/skin.ts), [src/web/themes.ts](src/web/themes.ts)). Mỗi theme đổi cả môi trường của từng Đêm (trời, trăng, sao, đảo, cầu tre, biển mây, cây cỏ, bầy đom đóm trang trí) lẫn Mây, Đèn Lồng, Đom đóm, Bóng Mực và font chữ. Sim, Test Contract, bản đồ và đầu ra headless không đổi; `?bench` không chạy dòng theme nào nên cảnh bench giữ nguyên.
 
-| Theme | Mặc định khi | Đổi gì |
-|---|---|---|
-| **Sơn Mài** | bản build (`npm run play`) | Mây, Đèn Lồng (đèn lụa bầu dục), Đom đóm và Bóng Mực theo chất liệu tranh sơn mài: mặt bóng, viền thếp vàng |
-| **Chạy Show** | `npm run dev` | Mây thành ca sĩ cầm micro (vẫn đội nón lá treo đèn nhỏ), Đom đóm thành fan giơ tim, Đèn Lồng thành sân khấu (khán giả xếp theo tiến độ nạp, đèn rọi khi thắp), Bóng Mực thành antifan có bong bóng chê bai; HUD đổi nhãn thành Show / Cát-xê / Antifan |
+| Theme | Đổi gì |
+|---|---|
+| **Sơn Mài** (mặc định bản build, `npm run play`) | Chất liệu tranh sơn mài: mặt bóng có phản chiếu, viền thếp vàng, cỏ vỏ trứng rạn, rừng tre đốt vàng, đèn lụa bầu dục, biển mây vẽ mây cuộn vàng |
+| **Giấy Dó** | Sách dựng hình cắt giấy: tô phẳng 3 nấc, viền mực chàm, cây cau và chuối cắt giấy, mây giấy viền sóng, đèn giấy xếp |
+| **Đom Đóm · Chạy Show** (mặc định `npm run dev`) | Mây thành ca sĩ cầm micro (vẫn đội nón lá treo đèn nhỏ), Đom đóm thành fan giơ tim, Đèn Lồng thành sân khấu (khán giả xếp theo tiến độ nạp, đèn rọi khi thắp), Bóng Mực thành antifan có bong bóng chê bai; nền giàn hoa thiên lý và bầy đom đóm; HUD đổi nhãn thành Show / Cát-xê / Antifan |
 
-- **Đổi theme:** thêm `?theme=sonmai`, `?theme=chayshow` hoặc `?theme=classic` (hình gốc) vào URL.
+- **Đổi theme:** Cài đặt → Giao diện (lưu lại, trang tải lại), hoặc thêm `?theme=sonmai|giaydo|chayshow|classic` vào URL (`classic` = hình gốc).
 - **Giữ yêu cầu:**
-  - màu các thành phần lấy từ Bảng màu chuẩn Ticket-02 §8;
-  - bật "Bảng màu dễ phân biệt" thì theme nhường cho hình gốc (Ticket-03 §6);
-  - "Giảm chuyển động" làm phần trang trí đứng yên;
-  - theme dùng lại nguồn sáng của game, không thêm đèn.
-- **Ba phương án thiết kế** (thêm Giấy Dó, cắt giấy): mở `/preview.html` khi chạy `npm run dev`.
-- **Bằng chứng:** hai ảnh dưới chụp game ở Đêm 1, 1280×720, bằng Chrome headless. Tình huống được đặt sẵn bằng công cụ thử: đã thắp 1 đèn, 2 Bóng Mực, 1 con đang Choáng.
+  - màu các thành phần lấy từ Bảng màu chuẩn Ticket-02 §8; ánh sáng nền theo 0.15 + 0.55 × đèn sáng / tổng;
+  - bật "Bảng màu dễ phân biệt" thì Mây, đèn, Bóng Mực trở về hình gốc (giấy rách, đèn xẹp, viền xanh; Ticket-03 §6);
+  - "Giảm chuyển động" làm phần trang trí đứng yên và không chớp sáng khi thắp đèn;
+  - chữ giữ đúng cỡ của game (≥ 18 px, ×1.25 khi chữ lớn), theme chỉ đổi họ font;
+  - không thêm đèn điểm (PointLight); 3 đèn nền cổ điển được thay bằng 2 đèn của theme;
+  - cây cỏ nằm giữa camera và Mây được khoét đi để Mây luôn thấy được.
+- **Hiệu năng:** đo bằng Edge với vsync và trần khung hình tắt, trên MacBook Air M1, 1280×720, camera sau lưng Mây ở đầu Đêm. Kết quả (FPS trung bình trong 4 s):
 
-![Theme Sơn Mài: đèn lụa đã thắp, Bóng Mực](docs/img/theme-sonmai.png)
-![Theme Chạy Show: sân khấu đã thắp, antifan có bong bóng](docs/img/theme-chayshow.png)
+  | Theme | Đêm 1 | Đêm 2 | Đêm 3 |
+  |---|---|---|---|
+  | Cổ điển | 460 | 448 | 364 |
+  | Sơn Mài | 308 | 271 | 205 |
+  | Giấy Dó | 440 | 396 | 357 |
+  | Đom Đóm · Chạy Show | 296 | 256 | 191 |
+
+- **Giới hạn đã biết:** chỉ cây cỏ chắn đường nhìn tới Mây mới được khoét, nên Bóng Mực đứng sau bụi tre vẫn có thể bị che một phần. Mũi tên ở mép màn hình vẫn báo con mới xuất hiện.
+- **Trang so phương án:** mở `/preview.html` khi chạy `npm run dev`.
+- **Bằng chứng:** ba ảnh dưới chụp game ở Đêm 1, 1280×720, bằng Chrome headless. Tình huống được đặt sẵn bằng công cụ thử: đã thắp 1 đèn, 2 Bóng Mực, 1 con đang Choáng.
+
+![Theme Sơn Mài: rừng tre, đèn lụa đã thắp, Bóng Mực](docs/img/theme-sonmai.png)
+![Theme Giấy Dó: cây cắt giấy, đèn giấy đã thắp, Bóng Mực](docs/img/theme-giaydo.png)
+![Theme Chạy Show: giàn thiên lý, sân khấu đã thắp, antifan có bong bóng](docs/img/theme-chayshow.png)
 
 ## Tài liệu và harness AI
 
