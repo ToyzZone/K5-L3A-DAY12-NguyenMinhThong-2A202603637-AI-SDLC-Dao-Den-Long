@@ -33,7 +33,7 @@ Test: `npm test` (scenario headless cho từng tính năng + kiểm tra contract
 
 ## Luật và cách tính điểm (contract v1.2, Ticket-03)
 
-- **Mục tiêu:** giữ đảo sáng tới bình minh. Thắng khi còn sống lúc hết giờ và có ≥ 60% số đèn đang sáng (Đêm 1: 3/5, Đêm 2: 4/6). Hết Flame thì thua ngay. Đêm 1 dài 240 s, Đêm 2 dài 270 s.
+- **Mục tiêu:** giữ đảo sáng tới bình minh. Thắng khi còn sống lúc hết giờ và có ≥ 60% số đèn đang sáng (Đêm 1: 3/5, Đêm 2: 4/6, Đêm 3: 5/7). Hết Flame thì thua ngay. Đêm dài 240 / 270 / 300 s.
 - **Di chuyển:** chạy 6 m/s, nhảy 7 m/s, Lướt 14 m/s trong 0.2 s (hồi 1.5 s). Rơi khỏi đảo: −1 Flame, mất hết Đom đóm.
 - **Đom đóm:** nhặt tự động khi ≤ 1 m. Sức chứa `10 + 2 × số lần thắp thành công`, tối đa 20.
 - **Đèn:** thắp lần đầu cần 10 Đom đóm, thắp lại cần 5. Khi sáng có 100 dầu, hao 1/s, hết dầu thì tắt. Bấm E ở đèn đang sáng để châm dầu (+10 dầu mỗi Đom đóm). Đèn sáng có dầu ≥ 30 tạo **Vùng an toàn** 6 m.
@@ -49,7 +49,7 @@ Test: `npm test` (scenario headless cho từng tính năng + kiểm tra contract
 
 ## Tuning và giả định
 
-`tuning` trong `game.contract.json` là đúng số chuẩn của Ticket-02/03 (test `contract.test.mjs` đỏ nếu lệch). `shade_speed` = 4.0 là số Đêm 1/2; Đêm 3 dùng 4.5 m/s theo ticket nhưng Đêm 3 **chưa làm**. Giả định cho chỗ ticket chưa nói: [phase-2](docs/notes/phase-2.md), [phase-3](docs/notes/phase-3.md). Breaking changes: [CHANGELOG.md](CHANGELOG.md). Giả định Phase 1: [docs/notes/phase-1.md](docs/notes/phase-1.md).
+`tuning` trong `game.contract.json` là đúng số chuẩn của Ticket-02/03 (test `contract.test.mjs` đỏ nếu lệch). `shade_speed` = 4.0 là số Đêm 1/2; Đêm 3 dùng 4.5 m/s theo ticket (số theo từng Đêm nằm ở `src/sim/maps.ts`). Giả định cho chỗ ticket chưa nói: [phase-2](docs/notes/phase-2.md), [phase-3](docs/notes/phase-3.md). Breaking changes: [CHANGELOG.md](CHANGELOG.md). Giả định Phase 1: [docs/notes/phase-1.md](docs/notes/phase-1.md).
 
 ## Sáng tạo của tôi
 
