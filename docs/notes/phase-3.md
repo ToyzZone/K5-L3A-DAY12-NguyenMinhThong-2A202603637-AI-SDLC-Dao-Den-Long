@@ -34,8 +34,8 @@ Nguồn: [docs/lab/phase-3-ticket.md](../lab/phase-3-ticket.md). Quyết định
 | Sức chứa tăng dần | Đạt | test "sức chứa" |
 | Điểm mới | Đạt | các test trên kiểm tra điểm |
 | Contract v1.2 (tuning, snapshot, scenario, sự kiện) | Đạt | `contract.test.mjs` + test định dạng |
-| Giao diện: thanh dầu, nhấp nháy 1 Hz, HUD `mang/sức chứa` | **Chưa đạt**: subagent giao diện đang làm phần Phase 2 | — |
-| Chế độ mù màu | **Chưa đạt** | — |
+| Giao diện: thanh dầu, nhấp nháy 1 Hz, HUD `mang/sức chứa`, nhắc châm dầu | Đã làm, build đạt; **chưa xem chạy thật** (tab Safari của agent bị ẩn nên không render) | `src/web/main.ts` |
+| Chế độ mù màu | Đã làm (cài đặt được lưu); **chưa xem chạy thật** | `src/web/main.ts`, `index.html` |
 | Đêm 3 | **Chưa đạt** (từ Phase 2) | — |
 
 Toàn bộ test: `npm test` → 37/37 đạt. Bằng chứng chạy: [docs/proof/phase-3/](../proof/phase-3/).
